@@ -24,17 +24,9 @@ class OAuthController {
             const newClient = await db.one(
                 `INSERT INTO oauth_clients 
                 (client_id, client_secret, name, user_id, website_url, redirect_uri)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING id, client_id, name, website_url, redirect_uri`,
-                [
-                    clientId,
-                    clientSecret,
-                    name,
-                    description,
-                    userId,
-                    websiteUrl,
-                    [redirectUri],
-                ]
+                VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING id, client_id, client_secret, name, website_url, redirect_uri`,
+                [clientId, clientSecret, name, userId, websiteUrl, redirectUri]
             );
 
             res.status(201).json({
@@ -55,10 +47,9 @@ class OAuthController {
             const userId = req.user.id;
 
             const clients = await db.any(
-                `SELECT id, client_id, name, website_url, redirect_uri 
+                `SELECT id, client_id, name, website_url, redirect_uri, client_secret
                 FROM oauth_clients 
-                WHERE user_id = $1 
-                ORDER BY created_at DESC`,
+                WHERE user_id = $1`,
                 [userId]
             );
 
@@ -75,7 +66,7 @@ class OAuthController {
             const userId = req.user.id;
 
             const client = await db.oneOrNone(
-                `SELECT id, client_id, name, website_url, redirect_uri 
+                `SELECT id, client_id, name, website_url, redirect_uri, client_secret
                 FROM oauth_clients 
                 WHERE client_id = $1 AND user_id = $2`,
                 [clientId, userId]
@@ -91,6 +82,38 @@ class OAuthController {
         } catch (error) {
             console.error("Error fetching OAuth client:", error);
             res.status(500).json({ error: "Failed to fetch OAuth client" });
+        }
+    }
+
+    async updateClient(req, res) {
+        try {
+            const { clientId } = req.params;
+            const userId = req.user.id;
+            const { name, websiteUrl, redirectUri } = req.body;
+
+            const existingClient = await db.oneOrNone(
+                "SELECT id FROM oauth_clients WHERE client_id = $1 AND user_id = $2",
+                [clientId, userId]
+            );
+
+            if (!existingClient) {
+                return res
+                    .status(404)
+                    .json({ error: "OAuth client not found" });
+            }
+
+            const updatedClient = await db.one(
+                `UPDATE oauth_clients 
+                SET name = $1, website_url = $2, redirect_uri = $3
+                WHERE client_id = $4
+                RETURNING id, client_id, name, website_url, redirect_uri`,
+                [name, websiteUrl, redirectUri, clientId]
+            );
+
+            res.json({ client: updatedClient });
+        } catch (error) {
+            console.error("Error updating OAuth client:", error);
+            res.status(500).json({ error: "Failed to update OAuth client" });
         }
     }
 }

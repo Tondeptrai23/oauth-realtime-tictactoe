@@ -14,4 +14,9 @@ router.get(
     OAuthController.getClientById.bind(OAuthController)
 );
 
+router.put(
+    "/clients/:clientId",
+    OAuthController.updateClient.bind(OAuthController)
+);
+
 module.exports = router;

@@ -1,0 +1,146 @@
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div
+                    class="card-header d-flex justify-content-between align-items-center"
+                >
+                    <h3 class="mb-0">
+                        My OAuth Clients
+                    </h3>
+                    <div class="d-flex gap-2">
+                        <a href="/dashboard" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Dashboard
+                        </a>
+                        <a href="/register-client" class="btn btn-primary">
+                            Register New Client
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="loadingSpinner" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">
+                                Loading...
+                            </span>
+                        </div>
+                    </div>
+                    <div id="clientsList">
+                        <!-- Clients will be loaded here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="public/js/my-clients.js"></script>
+</div>
+
+<!-- Template for client card -->
+<template id="clientCardTemplate">
+    <div class="card mb-3 client-card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h5 class="card-title mb-0"></h5>
+                <div>
+                    <button
+                        class="btn btn-sm btn-outline-secondary edit-client-btn"
+                    >
+                        Edit
+                    </button>
+                </div>
+            </div>
+
+            <div class="client-details">
+                <div class="mb-2">
+                    <strong>
+                        Client ID:
+                    </strong>
+                    <span class="ms-2 client-id"></span>
+                </div>
+
+                <div class="mb-2">
+                    <strong>
+                        Client Secret:
+                    </strong>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="client-secret-mask">
+                            ••••••••••••••••
+                        </span>
+                        <span class="client-secret-value d-none"></span>
+                        <button
+                            class="btn btn-sm btn-outline-primary toggle-secret-btn"
+                        >
+                            Show Secret
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <strong>
+                        Website URL:
+                    </strong>
+                    <span class="ms-2 website-url"></span>
+                </div>
+
+                <div class="mb-2">
+                    <strong>
+                        Redirect URI:
+                    </strong>
+                    <span class="ms-2 redirect-uri"></span>
+                </div>
+            </div>
+
+            <div class="edit-form d-none">
+                <form class="update-client-form">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Application Name
+                        </label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="name"
+                            required
+                        />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Website URL
+                        </label>
+                        <input
+                            type="url"
+                            class="form-control"
+                            name="websiteUrl"
+                        />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Redirect URI
+                        </label>
+                        <input
+                            type="url"
+                            class="form-control"
+                            name="redirectUri"
+                            required
+                        />
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            Save Changes
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-secondary cancel-edit-btn"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</template>

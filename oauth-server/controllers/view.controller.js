@@ -1,5 +1,3 @@
-const AuthMiddleware = require("../middleware/auth.middleware");
-
 class ViewController {
     showRegister(req, res) {
         res.render("register");
@@ -19,6 +17,10 @@ class ViewController {
 
     showRegisterClient(req, res) {
         res.render("register-client");
+    }
+
+    showClients(req, res) {
+        res.render("my-clients");
     }
 }
 

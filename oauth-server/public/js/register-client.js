@@ -7,6 +7,12 @@ $(document).ready(function () {
         window.location.href = "/login";
     }
 
+    $("$closeModal").on("click", function () {
+        $("#registerClientForm")[0].reset();
+
+        window.location.href = "/my-clients";
+    });
+
     $("#registerClientForm").on("submit", function (e) {
         e.preventDefault();
 

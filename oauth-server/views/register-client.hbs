@@ -2,10 +2,14 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between">
                     <h3 class="mb-0">
                         Register New OAuth Client
                     </h3>
+                    <a href="/dashboard" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Dashboard
+                    </a>
                 </div>
                 <div class="card-body">
                     <form id="registerClientForm">
@@ -20,18 +24,6 @@
                                 name="name"
                                 required
                             />
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="description" class="form-label">
-                                Description
-                            </label>
-                            <textarea
-                                class="form-control"
-                                id="description"
-                                name="description"
-                                rows="3"
-                            ></textarea>
                         </div>
 
                         <div class="mb-3">
@@ -85,8 +77,7 @@
                         </div>
                         <div class="modal-body">
                             <div class="alert alert-warning">
-                                Please save these credentials immediately. The
-                                client secret will not be shown again.
+                                Please save these credentials.
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">
@@ -114,6 +105,7 @@
                         <div class="modal-footer">
                             <button
                                 type="button"
+                                id="closeModal"
                                 class="btn btn-secondary"
                                 data-bs-dismiss="modal"
                             >
