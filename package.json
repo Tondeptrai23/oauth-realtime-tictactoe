@@ -4,7 +4,7 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "nodemon ./oauth-server/server.js"
+        "start": "concurrently \"nodemon ./oauth-server/server.js\"  \"nodemon ./tic-tac-toe/app.js\""
     },
     "keywords": [],
     "author": "",
@@ -24,6 +24,7 @@
         "pg-promise": "^11.10.2"
     },
     "devDependencies": {
+        "concurrently": "^9.1.0",
         "nodemon": "^3.1.9"
     }
 }
