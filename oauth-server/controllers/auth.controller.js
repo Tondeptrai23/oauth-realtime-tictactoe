@@ -5,11 +5,11 @@ const db = require("../config/database");
 class AuthController {
     async register(req, res) {
         try {
-            const { email, password, fullname } = req.body;
+            const { username, password, fullname } = req.body;
 
             const existingUser = await db.oneOrNone(
-                "SELECT id FROM users WHERE email = $1",
-                [email]
+                "SELECT id FROM users WHERE username = $1",
+                [username]
             );
             if (existingUser) {
                 return res.status(400).json({ error: "User already exists" });
@@ -19,12 +19,12 @@ class AuthController {
             const passwordHash = await bcrypt.hash(password, salt);
 
             const newUser = await db.one(
-                "INSERT INTO users (email, password_hash, fullname) VALUES ($1, $2, $3) RETURNING id, email, fullname",
-                [email, passwordHash, fullname]
+                "INSERT INTO users (username, password_hash, fullname) VALUES ($1, $2, $3) RETURNING id, username, fullname",
+                [username, passwordHash, fullname]
             );
 
             const token = jwt.sign(
-                { id: newUser.id, email: newUser.email },
+                { id: newUser.id, username: newUser.username },
                 process.env.OAUTH_JWT_SECRET,
                 { expiresIn: "1d" }
             );
@@ -41,11 +41,11 @@ class AuthController {
 
     async login(req, res) {
         try {
-            const { email, password } = req.body;
+            const { username, password } = req.body;
 
             const user = await db.oneOrNone(
-                "SELECT id, email, password_hash FROM users WHERE email = $1",
-                [email]
+                "SELECT id, username, password_hash FROM users WHERE username = $1",
+                [username]
             );
 
             if (!user) {
@@ -61,7 +61,7 @@ class AuthController {
             }
 
             const token = jwt.sign(
-                { id: user.id, email: user.email },
+                { id: user.id, username: user.username },
                 process.env.OAUTH_JWT_SECRET,
                 { expiresIn: "1d" }
             );

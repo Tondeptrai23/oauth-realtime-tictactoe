@@ -1,3 +1,5 @@
+const AuthMiddleware = require("../middleware/auth.middleware");
+
 class ViewController {
     showRegister(req, res) {
         res.render("register");
@@ -7,7 +9,7 @@ class ViewController {
         res.render("login");
     }
 
-    showDashboard(req, res) {
+    async showDashboard(req, res) {
         res.render("dashboard");
     }
 }
