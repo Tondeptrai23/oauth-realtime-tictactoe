@@ -10,7 +10,7 @@ class OAuthController {
 
     async registerClient(req, res) {
         try {
-            const { name, description, websiteUrl, redirectUri } = req.body;
+            const { name, websiteUrl, redirectUri } = req.body;
             const userId = req.user.id;
 
             if (!name || !redirectUri) {
@@ -114,6 +114,163 @@ class OAuthController {
         } catch (error) {
             console.error("Error updating OAuth client:", error);
             res.status(500).json({ error: "Failed to update OAuth client" });
+        }
+    }
+
+    async showAuthorizationForm(req, res) {
+        try {
+            const { client_id, redirect_uri, scope, state } = req.query;
+
+            if (!client_id || !redirect_uri) {
+                return res.status(400).render("error", {
+                    message: "Missing required parameters",
+                });
+            }
+
+            const client = await db.oneOrNone(
+                "SELECT name, website_url FROM oauth_clients WHERE client_id = $1 AND redirect_uri = $2",
+                [client_id, redirect_uri]
+            );
+
+            if (!client) {
+                return res.status(400).render("error", {
+                    message: "Invalid client or redirect URI",
+                });
+            }
+
+            const requestedScopes = scope
+                ? scope.split(" ")
+                : ["profile:basic"];
+
+            if (state) {
+                req.session.oauth_state = state;
+            }
+
+            res.render("authorize", {
+                client,
+                scopes: requestedScopes,
+                client_id,
+                redirect_uri,
+                state,
+            });
+        } catch (error) {
+            console.error("Authorization form error:", error);
+            res.status(500).render("error", {
+                message: "Server error while processing authorization request",
+            });
+        }
+    }
+
+    async handleAuthorization(req, res) {
+        try {
+            const { client_id, redirect_uri, scope, state } = req.query;
+            const { approve } = req.body;
+
+            if (!approve) {
+                res.setHeader(
+                    "Location",
+                    `${redirect_uri}?error=access_denied&state=${state}`
+                );
+                return res.status(302).end();
+            }
+
+            const code = crypto.randomBytes(32).toString("hex");
+            const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+            const userId = (
+                await db.one(
+                    "SELECT user_id FROM oauth_clients WHERE client_id = $1",
+                    [client_id]
+                )
+            ).user_id;
+
+            await db.none(
+                `INSERT INTO authorization_codes 
+                (code, client_id, user_id, expires_at, scope) 
+                VALUES ($1, $2, $3, $4, $5)`,
+                [
+                    code,
+                    client_id,
+                    userId,
+                    expiresAt,
+                    scope ? scope.split(" ") : ["profile:basic"],
+                ]
+            );
+
+            const redirectUrl = new URL(redirect_uri);
+            redirectUrl.searchParams.set("code", code);
+            if (state) {
+                redirectUrl.searchParams.set("state", state);
+            }
+
+            res.setHeader("Location", redirectUrl.toString());
+            return res.status(302).end();
+        } catch (error) {
+            console.error("Authorization handling error:", error);
+            res.status(500).render("error", {
+                message: "Server error while processing authorization",
+            });
+        }
+    }
+
+    async generateToken(req, res) {
+        try {
+            const { grant_type, code, client_id, client_secret } = req.body;
+
+            const client = await db.oneOrNone(
+                "SELECT id FROM oauth_clients WHERE client_id = $1 AND client_secret = $2",
+                [client_id, client_secret]
+            );
+
+            if (!client) {
+                return res
+                    .status(401)
+                    .json({ error: "Invalid client credentials" });
+            }
+
+            if (grant_type !== "authorization_code") {
+                return res
+                    .status(400)
+                    .json({ error: "Unsupported grant type" });
+            }
+
+            const authCode = await db.oneOrNone(
+                `SELECT user_id, scope FROM authorization_codes 
+                WHERE code = $1 AND client_id = $2 AND expires_at > NOW()`,
+                [code, client_id]
+            );
+
+            if (!authCode) {
+                return res
+                    .status(400)
+                    .json({ error: "Invalid or expired authorization code" });
+            }
+
+            const accessToken = jwt.sign(
+                {
+                    user_id: authCode.user_id,
+                    client_id,
+                    scope: authCode.scope,
+                },
+                process.env.OAUTH_JWT_SECRET,
+                { expiresIn: "1h" }
+            );
+
+            await db.none("DELETE FROM authorization_codes WHERE code = $1", [
+                code,
+            ]);
+
+            res.json({
+                access_token: accessToken,
+                token_type: "Bearer",
+                expires_in: 3600,
+                scope: authCode.scope.join(" "),
+            });
+        } catch (error) {
+            console.error("Token generation error:", error);
+            res.status(500).json({
+                error: "Server error while generating token",
+            });
         }
     }
 }

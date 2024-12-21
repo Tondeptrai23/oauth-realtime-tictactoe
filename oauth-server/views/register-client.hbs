@@ -35,7 +35,12 @@
                                 class="form-control"
                                 id="websiteUrl"
                                 name="websiteUrl"
+                                pattern="https?://.*"
                             />
+                            <small class="form-text text-muted">
+                                Must include http:// or https:// protocol (e.g.,
+                                http://localhost:5173/callback)
+                            </small>
                         </div>
 
                         <div class="mb-3">
@@ -47,11 +52,13 @@
                                 class="form-control"
                                 id="redirectUri"
                                 name="redirectUri"
+                                pattern="https?://.*"
                                 required
                             />
                             <div class="form-text">
                                 The URI where users will be redirected after
-                                authorization
+                                authorization. Must include http:// or https://
+                                protocol (e.g., http://localhost:5173/callback)
                             </div>
                         </div>
 
@@ -100,8 +107,13 @@
                                     id="clientSecret"
                                     readonly
                                 />
+                                <small class="form-text text-muted">
+                                    Must include http:// or https:// protocol
+                                    (e.g., http://localhost:5173/callback)
+                                </small>
                             </div>
                         </div>
+
                         <div class="modal-footer">
                             <button
                                 type="button"

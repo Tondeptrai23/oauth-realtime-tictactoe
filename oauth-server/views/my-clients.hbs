@@ -113,7 +113,12 @@
                             type="url"
                             class="form-control"
                             name="websiteUrl"
+                            pattern="https?://.*"
                         />
+                        <small class="form-text text-muted">
+                            Must include http:// or https:// protocol (e.g.,
+                            http://localhost:5173/callback)
+                        </small>
                     </div>
 
                     <div class="mb-3">
@@ -124,8 +129,13 @@
                             type="url"
                             class="form-control"
                             name="redirectUri"
+                            pattern="https?://.*"
                             required
                         />
+                        <small class="form-text text-muted">
+                            Must include http:// or https:// protocol (e.g.,
+                            http://localhost:5173/callback)
+                        </small>
                     </div>
 
                     <div class="d-flex gap-2">

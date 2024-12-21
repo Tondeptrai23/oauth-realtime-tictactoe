@@ -3,20 +3,21 @@ const router = express.Router();
 const OAuthController = require("../controllers/oauth.controller");
 const Middleware = require("../middleware/auth.middleware");
 
-router.use(Middleware.validateToken);
-
-router.post("/clients", OAuthController.registerClient.bind(OAuthController));
-
-router.get("/clients", OAuthController.getClientsByUser.bind(OAuthController));
+// router.use(Middleware.validateToken);
 
 router.get(
-    "/clients/:clientId",
-    OAuthController.getClientById.bind(OAuthController)
+    "/authorize",
+    OAuthController.showAuthorizationForm.bind(OAuthController)
 );
-
-router.put(
-    "/clients/:clientId",
-    OAuthController.updateClient.bind(OAuthController)
+router.post(
+    "/authorize",
+    // Middleware.validateToken,
+    OAuthController.handleAuthorization.bind(OAuthController)
+);
+router.post(
+    "/token",
+    // Middleware.validateToken,
+    OAuthController.generateToken.bind(OAuthController)
 );
 
 module.exports = router;

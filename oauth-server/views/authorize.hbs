@@ -1,0 +1,66 @@
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header">
+            <h2>
+                Authorization Request
+            </h2>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h4>
+                    {{client.name}}
+                </h4>
+                <p>
+                    Website:
+                    <a href="{{client.website_url}}" target="_blank">
+                        {{client.website_url}}
+                    </a>
+                </p>
+            </div>
+
+            <div class="alert alert-info">
+                <p class="mb-0">
+                    The application is requesting access to:
+                </p>
+            </div>
+
+            <ul class="list-group mb-4">
+                {{#each scopes}}
+                    <li class="list-group-item">
+                        {{#if (eq this "profile:basic")}}
+                            Basic profile information (username, fullname)
+                        {{else if (eq this "profile:avatar")}}
+                            Profile picture
+                        {{else if (eq this "profile:email")}}
+                            Email address
+                        {{/if}}
+                    </li>
+                {{/each}}
+            </ul>
+
+            <form
+                method="POST"
+                action="/oauth/authorize?client_id={{client_id}}&redirect_uri={{redirect_uri}}&scope={{scope}}&state={{state}}"
+            >
+                <div class="d-grid gap-2">
+                    <button
+                        type="submit"
+                        name="approve"
+                        value="true"
+                        class="btn btn-primary btn-lg"
+                    >
+                        Approve
+                    </button>
+                    <button
+                        type="submit"
+                        name="approve"
+                        value="false"
+                        class="btn btn-outline-danger btn-lg"
+                    >
+                        Deny
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -6,6 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const session = require("express-session");
 
 const app = express();
 
@@ -21,8 +22,22 @@ app.engine(
         defaultLayout: "main",
         layoutsDir: path.join(__dirname, "views/layouts"),
         partialsDir: path.join(__dirname, "views/partials"),
+        helpers: {
+            eq: function (a, b) {
+                return a === b;
+            },
+        },
     })
 );
+
+app.use(
+    session({
+        secret: process.env.OAUTH_SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+    })
+);
+
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
