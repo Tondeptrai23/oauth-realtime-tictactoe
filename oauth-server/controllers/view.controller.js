@@ -6,6 +6,10 @@ class ViewController {
     showLogin(req, res) {
         res.render("login");
     }
+
+    showDashboard(req, res) {
+        res.render("dashboard");
+    }
 }
 
 module.exports = new ViewController();

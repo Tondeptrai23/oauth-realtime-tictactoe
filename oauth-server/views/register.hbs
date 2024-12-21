@@ -8,6 +8,7 @@
                     </h3>
                 </div>
                 <div class="card-body">
+                    <div id="alertPlaceholder"></div>
                     <form id="registerForm">
                         <div class="mb-3">
                             <label for="email" class="form-label">
@@ -32,7 +33,14 @@
                             />
                         </div>
                         <button type="submit" class="btn btn-primary w-100">
-                            Register
+                            <span
+                                class="spinner-border spinner-border-sm d-none"
+                                role="status"
+                                aria-hidden="true"
+                            ></span>
+                            <span class="btn-text">
+                                Register
+                            </span>
                         </button>
                     </form>
                     <p class="text-center mt-3">
