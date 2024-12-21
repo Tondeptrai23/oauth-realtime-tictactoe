@@ -1,0 +1,129 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        Register New OAuth Client
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form id="registerClientForm">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">
+                                Application Name *
+                            </label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="name"
+                                name="name"
+                                required
+                            />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">
+                                Description
+                            </label>
+                            <textarea
+                                class="form-control"
+                                id="description"
+                                name="description"
+                                rows="3"
+                            ></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="websiteUrl" class="form-label">
+                                Website URL
+                            </label>
+                            <input
+                                type="url"
+                                class="form-control"
+                                id="websiteUrl"
+                                name="websiteUrl"
+                            />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="redirectUri" class="form-label">
+                                Redirect URI *
+                            </label>
+                            <input
+                                type="url"
+                                class="form-control"
+                                id="redirectUri"
+                                name="redirectUri"
+                                required
+                            />
+                            <div class="form-text">
+                                The URI where users will be redirected after
+                                authorization
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Register Application
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="modal fade" id="credentialsModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                Application Credentials
+                            </h5>
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                            ></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="alert alert-warning">
+                                Please save these credentials immediately. The
+                                client secret will not be shown again.
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Client ID
+                                </label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="clientId"
+                                    readonly
+                                />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Client Secret
+                                </label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="clientSecret"
+                                    readonly
+                                />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="public/js/client.js"></script>
+</div>

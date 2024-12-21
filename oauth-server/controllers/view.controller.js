@@ -16,6 +16,10 @@ class ViewController {
     showProfile(req, res) {
         res.render("profile");
     }
+
+    showRegisterClient(req, res) {
+        res.render("register-client");
+    }
 }
 
 module.exports = new ViewController();
