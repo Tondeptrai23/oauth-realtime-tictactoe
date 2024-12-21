@@ -1,0 +1,84 @@
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <h3 class="mb-0">
+                        Profile Management
+                    </h3>
+                    <a href="/dashboard" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Dashboard
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form id="profileForm">
+                        <div class="row mb-4">
+                            <div class="col-md-4 text-center">
+                                <img
+                                    id="avatarPreview"
+                                    class="rounded-circle mb-3"
+                                    style="width: 150px; height: 150px; object-fit: cover;"
+                                />
+                                <div class="mb-3">
+                                    <input
+                                        type="file"
+                                        id="avatarInput"
+                                        class="form-control"
+                                        accept="image/*"
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    id="uploadAvatar"
+                                    class="btn btn-secondary"
+                                >
+                                    Update Avatar
+                                </button>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">
+                                        Username
+                                    </label>
+                                    <input
+                                        type="username"
+                                        class="form-control"
+                                        id="username"
+                                        readonly
+                                    />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fullname" class="form-label">
+                                        Full Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="fullname"
+                                    />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="nickname" class="form-label">
+                                        Nickname
+                                    </label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="nickname"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="public/js/profile.js"></script>
+</div>

@@ -3,7 +3,7 @@ $(document).ready(function () {
     const token = localStorage.getItem("token");
     if (token) {
         const payload = JSON.parse(atob(token.split(".")[1]));
-        $("#userEmail").text(payload.email);
+        $("#username").text(payload.username);
     } else {
         window.location.href = "/login";
     }

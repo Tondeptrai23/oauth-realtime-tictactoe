@@ -9,8 +9,12 @@ class ViewController {
         res.render("login");
     }
 
-    async showDashboard(req, res) {
+    showDashboard(req, res) {
         res.render("dashboard");
+    }
+
+    showProfile(req, res) {
+        res.render("profile");
     }
 }
 
