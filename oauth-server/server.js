@@ -7,6 +7,8 @@ const path = require("path");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const session = require("express-session");
+const PgSession = require("connect-pg-simple")(session);
+const db = require("./config/database");
 
 const app = express();
 
@@ -31,7 +33,21 @@ app.engine(
 );
 
 app.use(
+    "/oauth/token",
+    cors({
+        origin: process.env.CLIENT_URL,
+        methods: ["POST"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true,
+    })
+);
+
+app.use(
     session({
+        store: new PgSession({
+            pgPromise: db,
+            tableName: "user_sessions",
+        }),
         secret: process.env.OAUTH_SESSION_SECRET,
         resave: false,
         saveUninitialized: false,

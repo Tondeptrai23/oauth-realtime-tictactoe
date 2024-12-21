@@ -11,6 +11,7 @@ class AuthMiddleware {
 
             const decoded = jwt.verify(token, process.env.OAUTH_JWT_SECRET);
             req.user = decoded;
+            req.oauth = decoded;
             next();
         } catch (error) {
             return res.status(401).json({ error: "Invalid token" });

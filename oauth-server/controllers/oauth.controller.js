@@ -1,5 +1,8 @@
 const crypto = require("crypto");
 const db = require("../config/database");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const fetch = require("node-fetch");
 
 class OAuthController {
     generateClientCredentials() {
@@ -117,13 +120,15 @@ class OAuthController {
         }
     }
 
-    async showAuthorizationForm(req, res) {
+    async initializeAuthorizationRequest(req, res) {
         try {
-            const { client_id, redirect_uri, scope, state } = req.query;
+            const { client_id, redirect_uri, scope, state, response_type } =
+                req.query;
 
-            if (!client_id || !redirect_uri) {
+            if (!client_id || !redirect_uri || response_type !== "code") {
                 return res.status(400).render("error", {
-                    message: "Missing required parameters",
+                    layout: "oauth",
+                    message: "Invalid request parameters",
                 });
             }
 
@@ -134,6 +139,58 @@ class OAuthController {
 
             if (!client) {
                 return res.status(400).render("error", {
+                    layout: "oauth",
+                    message: "Invalid client or redirect URI",
+                });
+            }
+
+            if (!req.session.userId) {
+                return res.redirect(
+                    "/oauth/login?" + new URLSearchParams(req.query).toString()
+                );
+            }
+
+            res.redirect(
+                "/oauth/consent?" + new URLSearchParams(req.query).toString()
+            );
+        } catch (error) {
+            console.error("Authorization request error:", error);
+            res.status(500).render("error", {
+                layout: "oauth",
+                message: "Server error while processing request",
+            });
+        }
+    }
+
+    async authenticateUser(username, password) {
+        const user = await db.oneOrNone(
+            "SELECT id, password_hash FROM users WHERE username = $1",
+            [username]
+        );
+
+        if (!user) return null;
+
+        const validPassword = await bcrypt.compare(
+            password,
+            user.password_hash
+        );
+        if (!validPassword) return null;
+
+        return user;
+    }
+
+    async showAuthorizationForm(req, res) {
+        try {
+            const { client_id, redirect_uri, scope, state } = req.query;
+
+            const client = await db.oneOrNone(
+                "SELECT name, website_url FROM oauth_clients WHERE client_id = $1 AND redirect_uri = $2",
+                [client_id, redirect_uri]
+            );
+
+            if (!client) {
+                return res.status(400).render("error", {
+                    layout: "oauth",
                     message: "Invalid client or redirect URI",
                 });
             }
@@ -142,11 +199,8 @@ class OAuthController {
                 ? scope.split(" ")
                 : ["profile:basic"];
 
-            if (state) {
-                req.session.oauth_state = state;
-            }
-
             res.render("authorize", {
+                layout: "oauth",
                 client,
                 scopes: requestedScopes,
                 client_id,
@@ -154,9 +208,10 @@ class OAuthController {
                 state,
             });
         } catch (error) {
-            console.error("Authorization form error:", error);
+            console.error("Consent page error:", error);
             res.status(500).render("error", {
-                message: "Server error while processing authorization request",
+                layout: "oauth",
+                message: "Server error while processing request",
             });
         }
     }
@@ -246,11 +301,13 @@ class OAuthController {
                     .json({ error: "Invalid or expired authorization code" });
             }
 
+            const scope = authCode.scope || ["profile:basic"];
+
             const accessToken = jwt.sign(
                 {
                     user_id: authCode.user_id,
                     client_id,
-                    scope: authCode.scope,
+                    scope: scope,
                 },
                 process.env.OAUTH_JWT_SECRET,
                 { expiresIn: "1h" }
@@ -264,7 +321,7 @@ class OAuthController {
                 access_token: accessToken,
                 token_type: "Bearer",
                 expires_in: 3600,
-                scope: authCode.scope.join(" "),
+                scope: Array.isArray(scope) ? scope.join(" ") : scope,
             });
         } catch (error) {
             console.error("Token generation error:", error);

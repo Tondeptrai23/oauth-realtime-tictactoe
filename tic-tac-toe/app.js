@@ -3,6 +3,12 @@ const session = require("express-session");
 const { engine } = require("express-handlebars");
 const path = require("path");
 const bodyParser = require("body-parser");
+const initializePassport = require("./config/passport");
+const passport = require("passport");
+const { isAuthenticated } = require("./middleware/auth.middleware");
+const pgSession = require("connect-pg-simple")(session);
+const crypto = require("crypto");
+const db = require("./config/database");
 require("dotenv").config();
 
 const app = express();
@@ -14,11 +20,28 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use(
     session({
-        secret: process.env.SESSION_SECRET,
+        store: new pgSession({
+            pgPromise: db,
+            tableName: "ttt_sessions",
+        }),
+        secret:
+            process.env.SESSION_SECRET ||
+            crypto.randomBytes(32).toString("hex"),
         resave: false,
         saveUninitialized: false,
+        cookie: {
+            secure: false,
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000,
+        },
+        name: "ttt.sid",
     })
 );
+
+initializePassport(passport);
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.engine(
     "hbs",
@@ -32,8 +55,12 @@ app.engine(
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
-app.get("/", (req, res) => {
-    res.render("home");
+app.use("/", require("./routes/auth.route"));
+
+app.get("/", isAuthenticated, (req, res) => {
+    res.render("home", {
+        user: req.user,
+    });
 });
 
 app.use((err, req, res, next) => {

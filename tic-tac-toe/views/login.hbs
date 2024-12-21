@@ -1,0 +1,20 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <h2>
+                Welcome to Tic Tac Toe Online
+            </h2>
+            <p class="my-4">
+                Please login to continue
+            </p>
+            {{#if message}}
+                <div class="alert alert-danger">
+                    {{message}}
+                </div>
+            {{/if}}
+            <a href="/auth/login" class="btn btn-primary btn-lg">
+                Login with OAuth
+            </a>
+        </div>
+    </div>
+</div>

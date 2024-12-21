@@ -3,9 +3,17 @@ const db = require("../config/database");
 class ProfileController {
     async getProfile(req, res) {
         try {
+            if (!req.oauth || !req.oauth.scope) {
+                return res.status(403).json({ error: "No scope provided" });
+            }
+
+            if (!req.oauth.scope.includes("profile:basic")) {
+                return res.status(403).json({ error: "Insufficient scope" });
+            }
+
             const user = await db.one(
                 "SELECT id, username, fullname, nickname FROM users WHERE id = $1",
-                [req.user.id]
+                [req.user.user_id]
             );
             res.json(user);
         } catch (error) {
