@@ -23,13 +23,13 @@ app.engine(
     })
 );
 app.set("view engine", "hbs");
-app.set("views", "./views");
+app.set("views", path.join(__dirname, "views"));
 
-app.use("/", require("./routes"));
+app.use("/", require("./routes/index.route"));
 
 const sslOptions = {
-    key: fs.readFileSync(path.join(__dirname, "config/ssl/server.key")),
-    cert: fs.readFileSync(path.join(__dirname, "config/ssl/server.crt")),
+    key: fs.readFileSync(path.join(__dirname, "config/ssl/key.pem")),
+    cert: fs.readFileSync(path.join(__dirname, "config/ssl/cert.pem")),
 };
 
 const PORT = process.env.OAUTH_PORT || 53003;
