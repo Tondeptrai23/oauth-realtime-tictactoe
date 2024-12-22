@@ -15,8 +15,6 @@ class GameModel {
         hostId,
         { boardSize, turnTimeLimit, allowCustomSettings }
     ) {
-        console.log("hostId", hostId);
-
         return await db.one(
             `INSERT INTO ttt_games 
              (host_id, board_size, status, turn_time_limit, allow_custom_settings) 
@@ -34,6 +32,27 @@ class GameModel {
     static validateTurnTimeLimit(timeLimit) {
         const limit = parseInt(timeLimit);
         return limit >= 10 && limit <= 120;
+    }
+
+    static async getGameWithPlayers(gameId) {
+        return await db.oneOrNone(
+            `
+            SELECT g.*, 
+                host.username as host_username,
+                host.avatar_url as host_avatar_url,
+                host.rating as host_rating,
+                host.game_piece as host_game_piece,
+                guest.username as guest_username,
+                guest.avatar_url as guest_avatar_url,
+                guest.rating as guest_rating,
+                guest.game_piece as guest_game_piece
+            FROM ttt_games g
+            JOIN ttt_users host ON g.host_id = host.id
+            LEFT JOIN ttt_users guest ON g.guest_id = guest.id
+            WHERE g.id = $1
+        `,
+            [gameId]
+        );
     }
 }
 

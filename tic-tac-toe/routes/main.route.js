@@ -27,8 +27,12 @@ router.post(
     ProfileController.updateProfile.bind(ProfileController)
 );
 
-router.get("/lobby/create", isAuthenticated, GameController.showCreateForm);
+router.get("/lobby/create", GameController.showCreateForm.bind(GameController));
 
-router.post("/lobby/create", isAuthenticated, GameController.createGame);
+router.post("/lobby/create", GameController.createGame.bind(GameController));
+
+router.get("/lobby", GameController.showCurrentGame.bind(GameController));
+
+router.get("/game/:id", GameController.getGameLobby.bind(GameController));
 
 module.exports = router;

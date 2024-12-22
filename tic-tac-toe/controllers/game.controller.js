@@ -6,7 +6,7 @@ class GameController {
             const existingGame = await Game.findActiveGameByHostId(req.user.id);
 
             if (existingGame) {
-                return res.redirect(`/lobby/game/${existingGame.id}`);
+                return res.redirect(`/game/${existingGame.id}`);
             }
 
             res.render("create-game", {
@@ -31,7 +31,7 @@ class GameController {
             if (existingGame) {
                 return res.status(400).json({
                     error: "You already have an active game",
-                    redirectUrl: `/lobby/game/${existingGame.id}`,
+                    redirectUrl: `/game/${existingGame.id}`,
                 });
             }
 
@@ -59,12 +59,53 @@ class GameController {
 
             res.json({
                 success: true,
-                redirectUrl: `/lobby/game/${game.id}`,
+                redirectUrl: `/game/${game.id}`,
             });
         } catch (error) {
             console.error("Error creating game:", error);
             res.status(500).json({
                 error: "Failed to create game",
+            });
+        }
+    }
+
+    static async getGameLobby(req, res) {
+        try {
+            const gameId = req.params.id;
+
+            const game = await Game.getGameWithPlayers(gameId);
+
+            if (!game) {
+                return res.redirect("/");
+            }
+
+            res.render("lobby", {
+                game,
+                user: req.user,
+                isHost: game.host_id === req.user.id,
+                layout: "main",
+            });
+        } catch (error) {
+            console.error("Error loading game lobby:", error);
+            res.status(500).render("error", {
+                message: "Error loading game lobby",
+            });
+        }
+    }
+
+    static async showCurrentGame(req, res) {
+        try {
+            const existingGame = await Game.findActiveGameByHostId(req.user.id);
+
+            if (!existingGame) {
+                return res.redirect("/");
+            }
+
+            res.redirect(`/game/${existingGame.id}`);
+        } catch (error) {
+            console.error("Error getting current game:", error);
+            res.status(500).render("error", {
+                message: "Failed to get current game",
             });
         }
     }
