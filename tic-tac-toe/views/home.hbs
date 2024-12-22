@@ -143,3 +143,32 @@
         </div>
     </div>
 </template>
+
+<template id="waitingDialogTemplate">
+    <div
+        class="modal fade"
+        id="waitingDialog"
+        data-bs-backdrop="static"
+        tabindex="-1"
+    >
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        Joining Game
+                    </h5>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <div class="spinner-border text-primary mb-3" role="status">
+                        <span class="visually-hidden">
+                            Loading...
+                        </span>
+                    </div>
+                    <p class="mb-0">
+                        Waiting for host approval...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

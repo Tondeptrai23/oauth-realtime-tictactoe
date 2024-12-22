@@ -210,6 +210,8 @@ class GameLobbyManager {
                     rating: updatedGame.guest_rating,
                 },
             });
+
+            this.io.emit("lobby:join_approved", { userId, gameId });
         } catch (error) {
             console.error("Error approving join:", error);
             socket.emit("lobby:error", "Failed to approve player");
@@ -218,7 +220,11 @@ class GameLobbyManager {
 
     async handleRejectJoin(socket, data) {
         const { gameId, userId } = data;
-        this.io.to(`game:${gameId}`).emit("lobby:join_rejected", { userId });
+
+        this.io.emit("lobby:join_rejected", {
+            gameId,
+            userId,
+        });
     }
 
     handleDisconnect(socket) {

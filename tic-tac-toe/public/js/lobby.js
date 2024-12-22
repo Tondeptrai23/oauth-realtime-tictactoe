@@ -178,31 +178,6 @@ class LobbyManager {
     }
 
     setupJoinRequestModal() {
-        const confirmationModalHtml = `
-            <div class="modal fade" id="existingGameModal" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Existing Game Found</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>You already have an active game. If you join this game, your current game will be deleted and all players will be returned to the home page.</p>
-                            <p>Do you want to continue?</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn btn-danger" id="confirmJoinBtn">Yes, Join New Game</button>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-
-        document.body.insertAdjacentHTML("beforeend", confirmationModalHtml);
-        this.elements.existingGameModal = new bootstrap.Modal(
-            document.getElementById("existingGameModal")
-        );
-
         const confirmJoinBtn = document.getElementById("confirmJoinBtn");
         if (confirmJoinBtn) {
             confirmJoinBtn.addEventListener("click", () => {

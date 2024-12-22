@@ -8,18 +8,56 @@ class GamesManager {
     }
 
     initialize() {
-        // Request initial games list
         this.socket.emit("games:request");
 
-        // Listen for games list updates
         this.socket.on("games:list", (games) => {
             this.renderGames(games);
         });
 
-        // Listen for new game creation
         this.socket.on("game:created", () => {
             this.socket.emit("games:request");
         });
+
+        this.socket.on("lobby:join_rejected", () => {
+            if (data.userId === this.socket.id) {
+                this.hideWaitingDialog();
+                alert("Host rejected your join request");
+            }
+        });
+
+        this.socket.on("lobby:join_approved", (data) => {
+            if (data.userId === this.socket.id) {
+                this.hideWaitingDialog();
+                window.location.href = `/game/${data.gameId}`;
+            } else this.hideWaitingDialog();
+        });
+
+        this.socket.on("lobby:player_joined", (data) => {
+            this.hideWaitingDialog();
+            this.socket.emit("games:request");
+        });
+    }
+
+    showWaitingDialog() {
+        if (!this.waitingDialog) {
+            const template = document.getElementById("waitingDialogTemplate");
+            document.body.appendChild(template.content.cloneNode(true));
+            this.waitingDialog = new bootstrap.Modal(
+                document.getElementById("waitingDialog"),
+                {
+                    keyboard: false,
+                }
+            );
+        }
+        this.waitingDialog.show();
+    }
+
+    hideWaitingDialog() {
+        if (this.waitingDialog) {
+            this.waitingDialog.hide();
+            document.getElementById("waitingDialog").remove();
+            this.waitingDialog = null;
+        }
     }
 
     renderGames(games) {
@@ -91,7 +129,8 @@ class GamesManager {
         }
 
         joinButton.addEventListener("click", () => {
-            window.location.href = `/game/${game.id}`;
+            this.showWaitingDialog();
+            this.socket.emit("lobby:join_request", game.id);
         });
 
         return template;
