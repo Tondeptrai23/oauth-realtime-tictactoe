@@ -47,12 +47,17 @@ io.use((socket, next) => {
 
 const { OnlineUsersManager } = require("./socket/onlineUsers");
 const { HomeChatManager } = require("./socket/homeChat");
+const { GamesManager } = require("./socket/games");
 
 const onlineUsersManager = new OnlineUsersManager(io);
 const chatManager = new HomeChatManager(io, onlineUsersManager);
+const gameManager = new GamesManager(io, onlineUsersManager);
 
 onlineUsersManager.initialize();
 chatManager.initialize();
+gameManager.initialize();
+
+app.set("io", io);
 
 initializePassport(passport);
 

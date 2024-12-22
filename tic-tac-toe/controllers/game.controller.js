@@ -1,4 +1,4 @@
-const Game = require("../models/Game");
+const Game = require("../models/game");
 
 class GameController {
     static async showCreateForm(req, res) {
@@ -54,6 +54,8 @@ class GameController {
                 turnTimeLimit,
                 allowCustomSettings: allowCustomSettings === "true",
             });
+
+            req.app.get("io").emit("game:created", game);
 
             res.json({
                 success: true,

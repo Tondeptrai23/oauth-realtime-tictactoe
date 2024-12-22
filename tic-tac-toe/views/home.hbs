@@ -66,6 +66,7 @@
         </div>
     </div>
     <script src="/js/homeChat.js"></script>
+    <script src="/js/activeGames.js"></script>
 </div>
 
 <template id="userCardTemplate">
@@ -98,12 +99,20 @@
                     <h6 class="card-title mb-0 game-host"></h6>
                     <span class="badge game-status"></span>
                 </div>
-                <p class="card-text mb-2">
-                    Board Size:
-                    <span class="board-size"></span>
-                </p>
+                <div class="card-info small mb-3">
+                    <div
+                        class="d-flex justify-content-between align-items-center mb-1"
+                    >
+                        <span>
+                            Board Size:
+                            <span class="board-size"></span>
+                        </span>
+                        <span class="time-limit text-primary"></span>
+                    </div>
+                    <div class="custom-settings small"></div>
+                </div>
                 <div class="d-flex justify-content-between align-items-center">
-                    <button class="btn btn-sm btn-primary join-game-btn">
+                    <button class="btn btn-sm join-game-btn">
                         Join Game
                     </button>
                     <span class="text-muted small spectator-count">
