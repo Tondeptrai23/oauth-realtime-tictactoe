@@ -1,4 +1,6 @@
 const db = require("../config/database");
+const axios = require("axios");
+const https = require("https");
 
 const UserModel = {
     async findById(id) {
@@ -11,13 +13,38 @@ const UserModel = {
         ]);
     },
 
-    async updateProfile(userId, updates) {
+    async updateProfile(userId, updates, req) {
+        if (updates.avatar_url && updates.avatar_url === "auth") {
+            const axiosInstance = axios.create({
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false,
+                }),
+            });
+
+            const response = await axiosInstance.get(
+                process.env.AUTH_SERVER_PROFILE_URL + "/avatar",
+                {
+                    headers: {
+                        Authorization: `Bearer ${req.user.accessToken}`,
+                    },
+                    responseType: "arraybuffer",
+                }
+            );
+
+            if (response.status === 200) {
+                this.updateCustomAvatar(userId, response.data);
+            }
+
+            delete updates.avatar_url;
+        }
+
         const validFields = [
             "nickname",
-            "avatar_url",
             "game_piece",
             "board_color",
+            "avatar_url",
         ];
+
         const setClause = Object.keys(updates)
             .filter((key) => validFields.includes(key))
             .map((key, index) => `${key} = $${index + 2}`)
@@ -37,6 +64,36 @@ const UserModel = {
              RETURNING *`,
             values
         );
+    },
+
+    async getProfilePicture(userId) {
+        const avatar_url = await db.one(
+            "SELECT avatar_url FROM ttt_users WHERE id = $1",
+            [userId]
+        );
+
+        return avatar_url.avatar_url;
+    },
+
+    async getBinaryProfilePicture(userId) {
+        const avatar = await db.one(
+            "SELECT avatar FROM ttt_users WHERE id = $1",
+            [userId]
+        );
+
+        return avatar.avatar;
+    },
+
+    async updateCustomAvatar(userId, data) {
+        db.none("UPDATE ttt_users SET avatar_url = $1 WHERE id = $2", [
+            "auth",
+            userId,
+        ]);
+
+        db.none("UPDATE ttt_users SET avatar = $1 WHERE id = $2", [
+            data,
+            userId,
+        ]);
     },
 };
 

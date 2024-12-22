@@ -1,3 +1,3 @@
 $(document).ready(function () {
-    $("#navAuthAvatar").attr("src", "/profile/avatar");
+    $("#navAuthAvatar").attr("src", "/api/profile/avatar");
 });

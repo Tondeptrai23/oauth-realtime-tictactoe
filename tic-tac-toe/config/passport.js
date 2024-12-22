@@ -66,7 +66,7 @@ function initializePassport(passport) {
                         [
                             profileData.id,
                             profileData.username,
-                            profileData.avatar_url,
+                            profileData.avatar_url || "/images/avt1.png",
                         ]
                     );
                 }

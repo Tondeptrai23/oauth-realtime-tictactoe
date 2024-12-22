@@ -34,7 +34,7 @@
                                 </div>
                                 {{/each}}
                                 {{#if useAuthAvatar}}
-                                <div class="avatar-option {{#if (eq 'auth' ../user.avatar_url)}}selected{{/if}}"
+                                <div class="avatar-option {{#if (eq user.avatar_url "auth")}}selected{{/if}}"
                                     data-avatar="auth">
                                     <img 
                                         id="authAvatar"

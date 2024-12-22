@@ -6,9 +6,20 @@ const { isAuthenticated } = require("../middleware/auth.middleware");
 router.use(isAuthenticated);
 
 router.get("/profile", ProfileController.getProfile.bind(ProfileController));
+
+router.get(
+    "/api/profile/avatar",
+    ProfileController.getProfilePicture.bind(ProfileController)
+);
+
+router.get(
+    "/api/profile/avatar/:userId",
+    ProfileController.getProfilePictureById.bind(ProfileController)
+);
+
 router.get(
     "/profile/avatar",
-    ProfileController.getProfilePicture.bind(ProfileController)
+    ProfileController.getProfilePictureFromAuth.bind(ProfileController)
 );
 router.post(
     "/api/profile/update",

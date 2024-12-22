@@ -65,7 +65,7 @@ class OnlineUsersManager {
 
         avatar.src =
             user.avatarUrl === "auth"
-                ? "/images/default-avatar.png"
+                ? `/api/profile/avatar/${user.id}`
                 : user.avatarUrl;
         avatar.alt = `${user.username}'s avatar`;
 

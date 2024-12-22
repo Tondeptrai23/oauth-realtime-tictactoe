@@ -1,6 +1,7 @@
 const UserModel = require("../models/user");
 const axios = require("axios");
 const https = require("https");
+const fs = require("fs");
 
 class ProfileController {
     static async getProfile(req, res) {
@@ -34,12 +35,16 @@ class ProfileController {
                     .json({ error: "Invalid input parameters" });
             }
 
-            const updatedUser = await UserModel.updateProfile(req.user.id, {
-                avatar_url,
-                game_piece,
-                board_color,
-                nickname,
-            });
+            const updatedUser = await UserModel.updateProfile(
+                req.user.id,
+                {
+                    avatar_url,
+                    game_piece,
+                    board_color,
+                    nickname,
+                },
+                req
+            );
 
             res.json({ success: true, user: updatedUser });
         } catch (error) {
@@ -72,6 +77,26 @@ class ProfileController {
 
     static async getProfilePicture(req, res) {
         try {
+            const avatar_url = await UserModel.getProfilePicture(req.user.id);
+
+            if (avatar_url === "auth") {
+                const user = await UserModel.findById(req.user.id);
+
+                if (user.avatar) {
+                    res.setHeader("Content-Type", "image/png");
+                    return res.send(user.avatar);
+                }
+            }
+
+            res.setHeader("Content-Type", "image/png");
+            return res.send(fs.readFileSync(`${avatar_url}`));
+        } catch (error) {
+            console.error("Error fetching profile data:", error);
+        }
+    }
+
+    static async getProfilePictureFromAuth(req, res) {
+        try {
             const axiosInstance = axios.create({
                 httpsAgent: new https.Agent({
                     rejectUnauthorized: false,
@@ -90,6 +115,28 @@ class ProfileController {
 
             res.set("Content-Type", "image/jpeg");
             res.send(response.data);
+        } catch (error) {
+            console.error("Error fetching profile data:", error);
+        }
+    }
+
+    static async getProfilePictureById(req, res) {
+        try {
+            const avatar_url = await UserModel.getProfilePicture(
+                req.params.userId
+            );
+
+            if (avatar_url === "auth") {
+                const user = await UserModel.findById(req.params.userId);
+
+                if (user.avatar) {
+                    res.setHeader("Content-Type", "image/png");
+                    return res.send(user.avatar);
+                }
+            }
+
+            res.setHeader("Content-Type", "image/png");
+            return res.send(fs.readFileSync(`${avatar_url}`));
         } catch (error) {
             console.error("Error fetching profile data:", error);
         }
