@@ -1,4 +1,6 @@
+const path = require("path");
 const db = require("../config/database");
+const fs = require("fs");
 
 class ProfileController {
     async getProfile(req, res) {
@@ -32,7 +34,9 @@ class ProfileController {
             );
 
             if (!user.avatar) {
-                return res.status(404).json({ error: "No avatar found" });
+                user.avatar = fs.readFileSync(
+                    path.join(__dirname, "../public/images/default-avatar.png")
+                );
             }
 
             res.set("Content-Type", "image/jpeg");

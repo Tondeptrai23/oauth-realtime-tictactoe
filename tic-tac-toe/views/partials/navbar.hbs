@@ -43,13 +43,25 @@
                 <ul class="navbar-nav">
                     <li class="nav-item">
                         <a class="nav-link {{#if isProfile}}active{{/if}}" href="/profile">
-                            <img
-                                src="{{user.avatar_url}}"
-                                alt="Avatar"
-                                class="rounded-circle me-2"
-                                width="24"
-                                height="24"
-                            />
+                            {{#if (eq user.avatar_url "auth")}}
+                                <img
+                                    src="{{user.avatar_url}}"
+                                    id="navAuthAvatar"
+                                    alt="Avatar"
+                                    class="rounded-circle me-2"
+                                    width="24"
+                                    height="24"
+                                />
+                            {{else}}
+                                <img
+                                    src="{{user.avatar_url}}"
+                                    alt="Avatar"
+                                    class="rounded-circle me-2"
+                                    width="24"
+                                    height="24"
+                                />
+                            {{/if}}
+
                             {{user.username}}
                         </a>
                     </li>

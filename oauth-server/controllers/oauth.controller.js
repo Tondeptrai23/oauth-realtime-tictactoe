@@ -230,12 +230,7 @@ class OAuthController {
             const code = crypto.randomBytes(32).toString("hex");
             const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-            const userId = (
-                await db.one(
-                    "SELECT user_id FROM oauth_clients WHERE client_id = $1",
-                    [client_id]
-                )
-            ).user_id;
+            const userId = req.session.userId;
 
             await db.none(
                 `INSERT INTO authorization_codes 
