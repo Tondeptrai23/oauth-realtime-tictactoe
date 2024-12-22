@@ -13,6 +13,14 @@ class GamesManager {
             socket.on("games:request", () => {
                 this.sendActiveGames(socket);
             });
+
+            socket.on("game:deleted", () => {
+                this.broadcastGamesList();
+            });
+        });
+
+        this.io.on("games:refresh", () => {
+            this.broadcastGamesList();
         });
     }
 

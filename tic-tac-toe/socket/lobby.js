@@ -267,7 +267,6 @@ class GameLobbyManager {
             console.error("Error broadcasting lobby state:", error);
         }
     }
-
     async handleHostLeave(socket, gameId) {
         const userId = socket.request.session.passport.user;
 
@@ -297,6 +296,8 @@ class GameLobbyManager {
             }
 
             this.gameRooms.delete(gameId);
+
+            this.io.emit("games:refresh");
         } catch (error) {
             console.error("Error handling host leave:", error);
             socket.emit("lobby:error", "Failed to leave game");

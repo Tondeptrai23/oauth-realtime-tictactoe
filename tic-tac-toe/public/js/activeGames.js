@@ -3,6 +3,8 @@ class GamesManager {
         this.socket = io();
         this.gamesGrid = document.getElementById("gamesGrid");
         this.gameCardTemplate = document.getElementById("gameCardTemplate");
+        this.userId = parseInt(document.getElementById("userId").innerHTML);
+        this.DIALOG_TIMEOUT = 30000;
 
         this.initialize();
     }
@@ -18,18 +20,18 @@ class GamesManager {
             this.socket.emit("games:request");
         });
 
-        this.socket.on("lobby:join_rejected", () => {
-            if (data.userId === this.socket.id) {
+        this.socket.on("lobby:join_rejected", (data) => {
+            if (data.userId === this.userId) {
                 this.hideWaitingDialog();
                 alert("Host rejected your join request");
             }
         });
 
         this.socket.on("lobby:join_approved", (data) => {
-            if (data.userId === this.socket.id) {
+            if (data.userId === this.userId) {
                 this.hideWaitingDialog();
                 window.location.href = `/game/${data.gameId}`;
-            } else this.hideWaitingDialog();
+            }
         });
 
         this.socket.on("lobby:player_joined", (data) => {
@@ -50,9 +52,19 @@ class GamesManager {
             );
         }
         this.waitingDialog.show();
+
+        this.waitingDialogTimer = setTimeout(() => {
+            this.hideWaitingDialog();
+            alert("Request timed out. Please try again.");
+        }, this.DIALOG_TIMEOUT);
     }
 
     hideWaitingDialog() {
+        if (this.waitingDialogTimer) {
+            clearTimeout(this.waitingDialogTimer);
+            this.waitingDialogTimer = null;
+        }
+
         if (this.waitingDialog) {
             this.waitingDialog.hide();
             document.getElementById("waitingDialog").remove();

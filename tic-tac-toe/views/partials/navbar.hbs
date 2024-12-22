@@ -3,6 +3,13 @@
         <a class="navbar-brand" href="/">
             <i class="bi bi-grid-3x3"></i>
             Tic-Tac-Toe
+            <div class="hidden" id="userId">
+                {{#if user}}
+                    {{user.id}}
+                {{else}}
+                    0
+                {{/if}}
+            </div>  
         </a>
 
         <button

@@ -178,14 +178,6 @@ class LobbyManager {
     }
 
     setupJoinRequestModal() {
-        const confirmJoinBtn = document.getElementById("confirmJoinBtn");
-        if (confirmJoinBtn) {
-            confirmJoinBtn.addEventListener("click", () => {
-                this.socket.emit("lobby:force_join_request", this.gameId);
-                this.elements.existingGameModal.hide();
-            });
-        }
-
         if (this.isHost) {
             const modalHtml = `
             <div class="modal fade" id="joinRequestModal" tabindex="-1">
@@ -193,7 +185,7 @@ class LobbyManager {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Join Request</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" id="closeJoinButton"></button>
                         </div>
                         <div class="modal-body">
                             <div class="d-flex align-items-center mb-3">
@@ -249,6 +241,14 @@ class LobbyManager {
         };
 
         modal.querySelector(".btn-secondary").onclick = () => {
+            this.socket.emit("lobby:reject_join", {
+                gameId: this.gameId,
+                userId: userData.userId,
+            });
+            this.elements.joinRequestModal.hide();
+        };
+
+        modal.querySelector("#closeJoinButton").onclick = () => {
             this.socket.emit("lobby:reject_join", {
                 gameId: this.gameId,
                 userId: userData.userId,
