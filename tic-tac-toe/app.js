@@ -9,34 +9,45 @@ const { isAuthenticated } = require("./middleware/auth.middleware");
 const pgSession = require("connect-pg-simple")(session);
 const crypto = require("crypto");
 const db = require("./config/database");
+const http = require("http");
+const { Server } = require("socket.io");
 require("dotenv").config();
 
 const app = express();
+const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 22375;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use(
-    session({
-        store: new pgSession({
-            pgPromise: db,
-            tableName: "ttt_sessions",
-        }),
-        secret:
-            process.env.SESSION_SECRET ||
-            crypto.randomBytes(32).toString("hex"),
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            secure: false,
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000,
-        },
-        name: "ttt.sid",
-    })
-);
+const sessionMiddleware = session({
+    store: new pgSession({
+        pgPromise: db,
+        tableName: "ttt_sessions",
+    }),
+    secret:
+        process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex"),
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false,
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000,
+    },
+    name: "ttt.sid",
+});
+
+app.use(sessionMiddleware);
+
+const io = new Server(httpServer);
+io.use((socket, next) => {
+    sessionMiddleware(socket.request, socket.request.res || {}, next);
+});
+
+const { OnlineUsersManager } = require("./socket/onlineUsers");
+const onlineUsersManager = new OnlineUsersManager(io);
+onlineUsersManager.initialize();
 
 initializePassport(passport);
 
@@ -79,6 +90,6 @@ app.use((err, req, res, next) => {
     res.status(500).render("error", { error: err });
 });
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
