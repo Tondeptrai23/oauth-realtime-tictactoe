@@ -10,25 +10,21 @@ class HomeChatManager {
     }
 
     initialize() {
-        // Request chat history immediately and when reconnecting
         this.requestChatHistory();
 
         this.socket.on("connect", () => {
             this.requestChatHistory();
         });
 
-        // Listen for new messages
         this.socket.on("chat:message", (message) => {
             this.appendMessage(message);
         });
 
-        // Load chat history
         this.socket.on("chat:history", (messages) => {
             console.log("Received chat history:", messages);
             this.loadChatHistory(messages);
         });
 
-        // Handle errors
         this.socket.on("chat:error", (error) => {
             console.error("Chat error:", error);
         });
@@ -77,16 +73,9 @@ class HomeChatManager {
     }
 
     createMessageElement(message) {
-        if (!this.messageTemplate) {
-            console.error("Message template not found!");
-            return document.createElement("div");
-        }
-
         try {
             const template = this.messageTemplate.content.cloneNode(true);
             const messageContainer = template.querySelector(".chat-message");
-
-            console.log("Creating message element:", message);
 
             const avatar = messageContainer.querySelector(".avatar");
             avatar.src =
