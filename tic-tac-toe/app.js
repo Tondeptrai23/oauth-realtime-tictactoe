@@ -58,8 +58,8 @@ app.engine(
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
-app.use("/", require("./routes/main.route"));
 app.use("/", require("./routes/auth.route"));
+app.use("/", require("./routes/main.route"));
 
 app.get("/", isAuthenticated, (req, res) => {
     res.render("home", {

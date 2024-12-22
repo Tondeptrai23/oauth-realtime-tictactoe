@@ -52,6 +52,16 @@ router.get("/auth/callback", (req, res, next) => {
                 console.error("Login error:", loginErr);
                 return res.redirect("/login?error=login_error");
             }
+
+            req.session.passport = {
+                ...req.session.passport,
+                user: user.id,
+                oauth: {
+                    accessToken: info.accessToken,
+                    tokenScope: info.scope,
+                },
+            };
+
             res.redirect("/");
         });
     })(req, res, next);
@@ -64,6 +74,9 @@ router.get("/login", (req, res) => {
 });
 
 router.get("/logout", (req, res, next) => {
+    if (req.session.passport) {
+        delete req.session.passport.oauth;
+    }
     req.logout(function (err) {
         if (err) {
             return next(err);

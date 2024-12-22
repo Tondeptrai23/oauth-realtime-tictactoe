@@ -25,14 +25,12 @@
             </div>
 
             <ul class="list-group mb-4">
-                {{#each scopes}}
+                {{#each scope}}
                     <li class="list-group-item">
                         {{#if (eq this "profile:basic")}}
                             Basic profile information (username, fullname)
-                        {{else if (eq this "profile:avatar")}}
+                        {{else if (eq this "profile:full")}}
                             Profile picture
-                        {{else if (eq this "profile:email")}}
-                            Email address
                         {{/if}}
                     </li>
                 {{/each}}

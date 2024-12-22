@@ -37,6 +37,8 @@ $(document).ready(function () {
         avatarOption.addClass("selected");
     });
 
+    $("#authAvatar").attr("src", "/profile/avatar");
+
     $("#profileForm").submit(function (e) {
         e.preventDefault();
 

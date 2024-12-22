@@ -24,6 +24,27 @@ class ProfileController {
         }
     }
 
+    async getProfilePicture(req, res) {
+        try {
+            const user = await db.one(
+                "SELECT avatar FROM users WHERE id = $1",
+                [req.user.user_id]
+            );
+
+            if (!user.avatar) {
+                return res.status(404).json({ error: "No avatar found" });
+            }
+
+            res.set("Content-Type", "image/jpeg");
+            res.send(user.avatar);
+        } catch (error) {
+            console.error("Get profile picture error:", error);
+            res.status(500).json({
+                error: "Server error while fetching profile picture",
+            });
+        }
+    }
+
     async updateProfile(req, res) {
         try {
             const { fullname, nickname } = req.body;

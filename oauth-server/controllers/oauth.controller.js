@@ -195,14 +195,12 @@ class OAuthController {
                 });
             }
 
-            const requestedScopes = scope
-                ? scope.split(" ")
-                : ["profile:basic"];
+            const requestedScopes = scope ? scope.split(" ") : ["profile:full"];
 
             res.render("authorize", {
                 layout: "oauth",
                 client,
-                scopes: requestedScopes,
+                scope: requestedScopes,
                 client_id,
                 redirect_uri,
                 state,
@@ -248,7 +246,7 @@ class OAuthController {
                     client_id,
                     userId,
                     expiresAt,
-                    scope ? scope.split(" ") : ["profile:basic"],
+                    scope ? scope.split(",") : ["profile:full"],
                 ]
             );
 
@@ -301,7 +299,7 @@ class OAuthController {
                     .json({ error: "Invalid or expired authorization code" });
             }
 
-            const scope = authCode.scope || ["profile:basic"];
+            const scope = authCode.scope || ["profile:full"];
 
             const accessToken = jwt.sign(
                 {

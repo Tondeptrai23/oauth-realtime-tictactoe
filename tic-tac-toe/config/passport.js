@@ -71,7 +71,10 @@ function initializePassport(passport) {
                     );
                 }
 
-                return done(null, user);
+                return done(null, user, {
+                    accessToken: accessToken,
+                    scope: params.scope,
+                });
             } catch (err) {
                 console.error("Strategy callback error:", err);
                 return done(err);

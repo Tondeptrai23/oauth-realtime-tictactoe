@@ -21,7 +21,8 @@
                                 {{#if useAuthAvatar}}
                                 <div class="avatar-option {{#if (eq 'auth' ../user.avatar_url)}}selected{{/if}}"
                                     data-avatar="auth">
-                                    <img src="/auth/avatar"
+                                    <img 
+                                        id="authAvatar"
                                         class="img-thumbnail"
                                         alt="Auth avatar" />
                                 </div>
