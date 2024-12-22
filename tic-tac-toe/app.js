@@ -50,11 +50,15 @@ app.engine(
         defaultLayout: "main",
         layoutsDir: path.join(__dirname, "views/layouts"),
         partialsDir: path.join(__dirname, "views/partials"),
+        helpers: {
+            eq: (a, b) => a === b,
+        },
     })
 );
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
+app.use("/", require("./routes/main.route"));
 app.use("/", require("./routes/auth.route"));
 
 app.get("/", isAuthenticated, (req, res) => {

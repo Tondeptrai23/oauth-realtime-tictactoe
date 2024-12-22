@@ -59,7 +59,7 @@ router.get("/auth/callback", (req, res, next) => {
 
 router.get("/login", (req, res) => {
     res.render("login", {
-        message: req.session.messages[0],
+        message: req.session.messages ? req.session.messages[0] : "",
     });
 });
 

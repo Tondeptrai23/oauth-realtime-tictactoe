@@ -1,0 +1,139 @@
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        Profile Settings
+                    </h5>
+                    <form id="profileForm">
+                        <div class="mb-3">
+                            <label class="form-label">Avatar</label>
+                            <div class="avatar-grid">
+                                {{#each staticAvatars}}
+                                <div class="avatar-option {{#if (eq this ../user.avatar_url)}}selected{{/if}}"
+                                    data-avatar="{{this}}">
+                                    <img src="{{this}}"
+                                        class="img-thumbnail"
+                                        alt="Avatar option" />
+                                </div>
+                                {{/each}}
+                                {{#if useAuthAvatar}}
+                                <div class="avatar-option {{#if (eq 'auth' ../user.avatar_url)}}selected{{/if}}"
+                                    data-avatar="auth">
+                                    <img src="/auth/avatar"
+                                        class="img-thumbnail"
+                                        alt="Auth avatar" />
+                                </div>
+                                {{/if}}
+                            </div>
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label class="form-label">Game Piece</label>
+                            <div class="piece-grid">
+                                {{#each gamePieces}}
+                                <div class="piece-option {{#if (eq @key ../user.game_piece)}}selected{{/if}}" 
+                                    data-piece="{{@key}}">
+                                    {{{this.svg}}}
+                                </div>
+                                {{/each}}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Board Color</label>
+                            <div class="color-grid">
+                                {{#each boardColors}}
+                                <div class="color-option">
+                                    <div class="color-box {{#if (eq this ../user.board_color)}}selected{{/if}}"
+                                        style="background-color: {{this}}"
+                                        data-color="{{this}}">
+                                    </div>
+                                </div>
+                                {{/each}}
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Save Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        Game History
+                    </h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Date
+                                    </th>
+                                    <th>
+                                        Opponent
+                                    </th>
+                                    <th>
+                                        Result
+                                    </th>
+                                    <th>
+                                        Board Size
+                                    </th>
+                                    <th>
+                                        Action
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each gameHistory}}
+                                    <tr>
+                                        <td>
+                                            {{formatDate this.created_at}}
+                                        </td>
+                                        <td>
+                                            {{#if (eq ../user.id this.host_id)}}
+                                                {{this.guest_name}}
+                                            {{else}}
+                                                {{this.host_name}}
+                                            {{/if}}
+                                        </td>
+                                        <td>
+                                            {{#if this.winner_name}}
+                                                {{#if (eq ../user.id this.winner_id)}}
+                                                    Won
+                                                {{else}}
+                                                    Lost
+                                                {{/if}}
+                                            {{else}}
+                                                Draw
+                                            {{/if}}
+                                        </td>
+                                        <td>
+                                            {{this.board_size}}x{{this.board_size}}
+                                        </td>
+                                        <td>
+                                            <button
+                                                class="btn btn-sm btn-primary replay-btn"
+                                                data-game-id="{{this.id}}"
+                                            >
+                                                Replay
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/js/profile.js"></script>
+</div>
