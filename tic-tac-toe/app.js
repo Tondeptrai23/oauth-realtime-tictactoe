@@ -46,8 +46,13 @@ io.use((socket, next) => {
 });
 
 const { OnlineUsersManager } = require("./socket/onlineUsers");
+const { HomeChatManager } = require("./socket/homeChat");
+
 const onlineUsersManager = new OnlineUsersManager(io);
+const chatManager = new HomeChatManager(io, onlineUsersManager);
+
 onlineUsersManager.initialize();
+chatManager.initialize();
 
 initializePassport(passport);
 
