@@ -48,14 +48,17 @@ io.use((socket, next) => {
 const { OnlineUsersManager } = require("./socket/onlineUsers");
 const { HomeChatManager } = require("./socket/homeChat");
 const { GamesManager } = require("./socket/games");
+const { GameLobbyManager } = require("./socket/lobby");
 
 const onlineUsersManager = new OnlineUsersManager(io);
 const chatManager = new HomeChatManager(io, onlineUsersManager);
 const gameManager = new GamesManager(io, onlineUsersManager);
+const gameLobbyManager = new GameLobbyManager(io, onlineUsersManager);
 
 onlineUsersManager.initialize();
 chatManager.initialize();
 gameManager.initialize();
+gameLobbyManager.initialize();
 
 app.set("io", io);
 

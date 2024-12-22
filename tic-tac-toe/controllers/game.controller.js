@@ -73,6 +73,10 @@ class GameController {
         try {
             const gameId = req.params.id;
 
+            if (isNaN(parseInt(gameId))) {
+                return res.redirect("/");
+            }
+
             const game = await Game.getGameWithPlayers(gameId);
 
             if (!game) {

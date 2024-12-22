@@ -91,7 +91,7 @@ class GamesManager {
         }
 
         joinButton.addEventListener("click", () => {
-            window.location.href = `/lobby/game/${game.id}`;
+            window.location.href = `/game/${game.id}`;
         });
 
         return template;
