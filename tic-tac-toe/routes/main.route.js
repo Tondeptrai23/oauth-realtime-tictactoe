@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const ProfileController = require("../controllers/profile.controller");
 const { isAuthenticated } = require("../middleware/auth.middleware");
+const GameController = require("../controllers/game.controller");
 
 router.use(isAuthenticated);
 
@@ -25,5 +26,9 @@ router.post(
     "/api/profile/update",
     ProfileController.updateProfile.bind(ProfileController)
 );
+
+router.get("/lobby/create", isAuthenticated, GameController.showCreateForm);
+
+router.post("/lobby/create", isAuthenticated, GameController.createGame);
 
 module.exports = router;

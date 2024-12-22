@@ -1,0 +1,92 @@
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        Create New Game
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form id="createGameForm">
+                        <div class="mb-3">
+                            <label for="boardSize" class="form-label">
+                                Board Size
+                            </label>
+                            <select
+                                class="form-select"
+                                id="boardSize"
+                                name="boardSize"
+                                required
+                            >
+                                <option value="">
+                                    Select board size
+                                </option>
+                                <option value="3">
+                                    3x3 (Classic)
+                                </option>
+                                <option value="5">
+                                    5x5 (Extended)
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="turnTimeLimit" class="form-label">
+                                Turn Time Limit (seconds)
+                            </label>
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="turnTimeLimit"
+                                name="turnTimeLimit"
+                                value="30"
+                                min="10"
+                                max="120"
+                                required
+                            />
+                            <div class="form-text">
+                                Time limit per turn (10-120 seconds)
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    id="allowCustomSettings"
+                                    name="allowCustomSettings"
+                                    value="true"
+                                    checked
+                                />
+                                <label
+                                    class="form-check-label"
+                                    for="allowCustomSettings"
+                                >
+                                    Allow Custom Settings
+                                </label>
+                                <div class="form-text">
+                                    {{#if hasCustomSettings}}
+                                        Players can use their custom game pieces
+                                        and board colors
+                                    {{else}}
+                                        All players will use default game pieces
+                                        and board colors
+                                    {{/if}}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                Create Game
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/js/create-game.js"></script>
+</div>
