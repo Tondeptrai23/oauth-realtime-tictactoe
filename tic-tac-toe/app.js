@@ -58,6 +58,13 @@ app.engine(
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "views"));
 
+app.use((req, res, next) => {
+    res.locals.isLobby = req.path === "/lobby";
+    res.locals.isProfile = req.path === "/profile";
+    res.locals.isLeaderboard = req.path === "/leaderboard";
+    next();
+});
+
 app.use("/", require("./routes/auth.route"));
 app.use("/", require("./routes/main.route"));
 
