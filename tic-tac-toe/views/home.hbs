@@ -1,8 +1,136 @@
-<div class="container">
-    <h1>
-        Welcome to Tic Tac Toe Online
-    </h1>
-    <p>
-        Coming soon...
-    </p>
+<div class="container-fluid">
+    <div class="row min-vh-100">
+        <div
+            class="col-md-3 col-lg-2 bg-light border-end p-3"
+            id="onlineUsersSidebar"
+        >
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    Online Users
+                </h5>
+                <span class="badge bg-success" id="onlineCount">
+                    0
+                </span>
+            </div>
+            <div
+                class="online-users-list"
+                style="max-height: calc(100vh - 200px); overflow-y: auto;"
+            >
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-7 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4>
+                    Active Games
+                </h4>
+            </div>
+
+            <div class="row g-4" id="gamesGrid">
+            </div>
+        </div>
+
+        <div class="col-md-3 col-lg-3 border-start p-3">
+            <div
+                class="chat-container d-flex flex-column"
+                style="height: calc(100vh - 100px);"
+            >
+                <h5 class="mb-3">
+                    Chat
+                </h5>
+
+                <div
+                    class="chat-messages flex-grow-1 overflow-auto mb-3"
+                    id="chatMessages"
+                >
+                </div>
+
+                <div class="chat-input">
+                    <div class="input-group">
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="messageInput"
+                            placeholder="Type a message..."
+                        />
+                        <button
+                            class="btn btn-primary"
+                            type="button"
+                            id="sendMessage"
+                        >
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Templates -->
+<template id="userCardTemplate">
+    <div class="user-card mb-2 p-2 border rounded">
+        <div class="d-flex align-items-center">
+            <img
+                src=""
+                alt="Avatar"
+                class="avatar rounded-circle me-2"
+                style="width: 32px; height: 32px;"
+            />
+            <div class="user-info">
+                <div class="username fw-bold"></div>
+                <div class="rating text-muted small"></div>
+            </div>
+            <div class="ms-auto">
+                <span class="status-indicator"></span>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="gameCardTemplate">
+    <div class="col-md-6 col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div
+                    class="d-flex justify-content-between align-items-center mb-2"
+                >
+                    <h6 class="card-title mb-0 game-host"></h6>
+                    <span class="badge game-status"></span>
+                </div>
+                <p class="card-text mb-2">
+                    Board Size:
+                    <span class="board-size"></span>
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <button class="btn btn-sm btn-primary join-game-btn">
+                        Join Game
+                    </button>
+                    <span class="text-muted small spectator-count">
+                        0 watching
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="chatMessageTemplate">
+    <div class="chat-message mb-2">
+        <div class="d-flex align-items-start">
+            <img
+                src=""
+                alt="Avatar"
+                class="avatar rounded-circle me-2"
+                style="width: 24px; height: 24px;"
+            />
+            <div class="message-content">
+                <div class="message-header">
+                    <span class="username fw-bold"></span>
+                    <span class="timestamp text-muted ms-2 small"></span>
+                </div>
+                <div class="message-text"></div>
+            </div>
+        </div>
+    </div>
+</template>
