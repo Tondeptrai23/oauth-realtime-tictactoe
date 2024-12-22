@@ -13,7 +13,7 @@ const UserModel = {
 
     async updateProfile(userId, updates) {
         const validFields = [
-            "username",
+            "nickname",
             "avatar_url",
             "game_piece",
             "board_color",

@@ -8,6 +8,21 @@
                     </h5>
                     <form id="profileForm">
                         <div class="mb-3">
+                            <label class="form-label">Nickname</label>
+                            <div class="input-group">
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="nickname" 
+                                    name="nickname" 
+                                    value="{{user.nickname}}" 
+                                    placeholder="{{user.username}}"
+                                    maxlength="100"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
                             <label class="form-label">Avatar</label>
                             <div class="avatar-grid">
                                 {{#each staticAvatars}}

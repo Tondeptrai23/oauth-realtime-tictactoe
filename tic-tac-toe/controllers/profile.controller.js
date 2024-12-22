@@ -26,7 +26,7 @@ class ProfileController {
 
     static async updateProfile(req, res) {
         try {
-            const { avatar_url, game_piece, board_color } = req.body;
+            const { avatar_url, game_piece, board_color, nickname } = req.body;
 
             if (!this.validateProfileUpdate(req.body, req.user.scope)) {
                 return res
@@ -38,6 +38,7 @@ class ProfileController {
                 avatar_url,
                 game_piece,
                 board_color,
+                nickname,
             });
 
             res.json({ success: true, user: updatedUser });

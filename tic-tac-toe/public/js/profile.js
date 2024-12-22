@@ -45,8 +45,10 @@ $(document).ready(function () {
         const selectedAvatar = $(".avatar-option.selected").data("avatar");
         const selectedPiece = $(".piece-option.selected").data("piece");
         const selectedColor = $(".color-box.selected").data("color");
+        const nickname = $("#nickname").val().trim();
 
         const formData = {
+            nickname: nickname,
             avatar_url: selectedAvatar,
             game_piece: selectedPiece,
             board_color: selectedColor,
@@ -59,6 +61,9 @@ $(document).ready(function () {
             success: function (response) {
                 if (response.success) {
                     showAlert("success", "Profile updated successfully!");
+
+                    const displayName = nickname || response.username;
+                    $(".navbar-displayname").text(displayName);
                 } else {
                     showAlert("danger", "Error updating profile");
                 }
