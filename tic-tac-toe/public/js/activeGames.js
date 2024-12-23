@@ -121,11 +121,21 @@ class GamesManager {
         }
 
         const statusBadge = card.querySelector(".game-status");
-        statusBadge.textContent =
-            game.status === "waiting" ? "Waiting" : "In Progress";
-        statusBadge.classList.add(
-            game.status === "waiting" ? "bg-success" : "bg-primary"
-        );
+        switch (game.status) {
+            case "in_progress":
+                statusBadge.textContent = "In Progress";
+                statusBadge.classList.add("bg-primary");
+                break;
+            case "ready":
+                statusBadge.textContent = "Ready";
+                statusBadge.classList.add("bg-warning");
+                break;
+            default:
+            case "waiting":
+                statusBadge.textContent = "Waiting";
+                statusBadge.classList.add("bg-success");
+                break;
+        }
 
         card.querySelector(
             ".spectator-count"

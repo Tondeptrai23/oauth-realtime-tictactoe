@@ -1,0 +1,37 @@
+<div class="game-container d-flex flex-column align-items-center justify-content-center">
+    {{#if (and game.host_id game.guest_id)}}
+        <div class="game-board position-relative" 
+            data-board-size="{{game.board_size}}"
+            data-host-color="{{game.host_board_color}}"
+            data-guest-color="{{game.guest_board_color}}">
+            {{#each (range 0 game.board_size)}}
+                {{#with this as |row|}}
+                <div class="board-row" data-row="{{row}}">
+                    {{#each (range 0 ../game.board_size)}}
+                        {{#with this as |col|}}
+                        <div class="board-cell" 
+                            data-row="{{row}}" 
+                            data-col="{{col}}">
+                        </div>
+                        {{/with}}
+                    {{/each}}
+                </div>
+                {{/with}}
+            {{/each}}
+        </div>
+
+        {{#if (eq game.status 'ready')}}
+            <div class="mt-4">
+                <button id="startGameBtn" class="btn btn-primary btn-lg" {{#unless isHost}}disabled{{/unless}}>
+                    {{#if isHost}}Start Game{{else}}Waiting for host to start...{{/if}}
+                </button>
+            </div>
+        {{/if}}
+    {{else}}
+        <div class="text-center text-muted">
+            <i class="bi bi-hourglass" style="font-size: 48px;"></i>
+            <h5 class="mt-3">Waiting for Players</h5>
+            <p>The game will start once both players are ready.</p>
+        </div>
+    {{/if}}
+</div>

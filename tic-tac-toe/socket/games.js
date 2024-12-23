@@ -44,7 +44,7 @@ class GamesManager {
                         ) as spectator_count
                  FROM ttt_games g
                  JOIN ttt_users host ON g.host_id = host.id
-                 WHERE g.status IN ('waiting', 'in_progress')
+                 WHERE g.status IN ('waiting', 'in_progress', 'ready')
                  ORDER BY g.created_at DESC`
             );
 
@@ -73,7 +73,7 @@ class GamesManager {
                         ) as spectator_count
                  FROM ttt_games g
                  JOIN ttt_users host ON g.host_id = host.id
-                 WHERE g.status IN ('waiting', 'in_progress')
+                 WHERE g.status IN ('waiting', 'in_progress', 'ready')
                  ORDER BY g.created_at DESC`
             );
 

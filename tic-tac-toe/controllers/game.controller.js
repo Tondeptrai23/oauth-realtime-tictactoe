@@ -1,4 +1,5 @@
 const Game = require("../models/game");
+const { GAME_PIECES } = require("../config/assets");
 
 class GameController {
     static async showCreateForm(req, res) {
@@ -88,6 +89,7 @@ class GameController {
                 user: req.user,
                 isHost: game.host_id === req.user.id,
                 layout: "main",
+                GAME_PIECES: GAME_PIECES,
             });
         } catch (error) {
             console.error("Error loading game lobby:", error);

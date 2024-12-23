@@ -107,20 +107,19 @@
                 class="game-board-container d-flex justify-content-center align-items-center"
                 style="min-height: 400px;"
             >
-                <div class="text-center text-muted">
-                    <i class="bi bi-hourglass" style="font-size: 48px;"></i>
-                    <h5 class="mt-3">
-                        Waiting for Players
-                    </h5>
-                    <p>
-                        {{#if isHost}}
+                {{#if game.guest_id}}
+                    {{> game-board game=game isHost=isHost GAME_PIECES=../GAME_PIECES}}
+                {{else}}
+                    <div class="text-center text-muted">
+                        <i class="bi bi-hourglass" style="font-size: 48px;"></i>
+                        <h5 class="mt-3">
+                            Waiting for Players
+                        </h5>
+                        <p>
                             Waiting for another player to join...
-                        {{else}}
-                            The game will start once another player joins and
-                            the host approves.
-                        {{/if}}
-                    </p>
-                </div>
+                        </p>
+                    </div>
+                {{/if}}
             </div>
         </div>
 

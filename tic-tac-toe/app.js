@@ -78,7 +78,30 @@ app.engine(
         layoutsDir: path.join(__dirname, "views/layouts"),
         partialsDir: path.join(__dirname, "views/partials"),
         helpers: {
-            eq: (a, b) => a === b,
+            range: function (start, end) {
+                const result = [];
+                for (let i = start; i < end; i++) {
+                    result.push(i);
+                }
+                return result;
+            },
+
+            eq: function (a, b) {
+                return a === b;
+            },
+
+            and: function () {
+                return Array.prototype.every.call(arguments, Boolean);
+            },
+
+            lookup: function (obj, field) {
+                return obj && obj[field];
+            },
+
+            choose_color: function (row, col, hostColor, guestColor) {
+                const sum = Number(row) + Number(col);
+                return sum % 2 === 0 ? hostColor : guestColor;
+            },
         },
     })
 );

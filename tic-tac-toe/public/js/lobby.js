@@ -44,6 +44,9 @@ class LobbyManager {
 
         this.socket.on("lobby:player_joined", (data) => {
             this.updateGuestPlayer(data.guest);
+
+            window.location.reload();
+            window.onload = () => this.handleBoardColors();
         });
 
         this.socket.on("lobby:join_rejected", () => {
@@ -74,14 +77,81 @@ class LobbyManager {
         });
 
         this.socket.on("lobby:guest_left", () => {
-            if (this.elements.guestPlayer) {
-                this.elements.guestPlayer.innerHTML = `
-                    <div class="text-center text-muted">
-                        <i class="bi bi-person-plus"></i>
-                        Waiting for player...
-                    </div>`;
-                this.elements.guestPlayer.classList.add("bg-light");
+            window.location.reload();
+        });
+
+        this.socket.on("game:started", () => {
+            const startGameBtn = document.getElementById("startGameBtn");
+            if (startGameBtn) {
+                startGameBtn.remove();
             }
+        });
+    }
+
+    initializeGameBoard() {
+        const gameBoard = document.querySelector(".game-board");
+        if (!gameBoard) return;
+
+        const startGameBtn = document.getElementById("startGameBtn");
+        if (startGameBtn) {
+            startGameBtn.addEventListener("click", () => {
+                if (this.isHost) {
+                    this.socket.emit("game:start", this.gameId);
+                }
+            });
+        }
+
+        this.boardState = Array(parseInt(gameBoard.dataset.boardSize))
+            .fill(null)
+            .map(() => Array(parseInt(gameBoard.dataset.boardSize)).fill(null));
+
+        const cells = gameBoard.querySelectorAll(".board-cell");
+        cells.forEach((cell) => {
+            cell.addEventListener("click", (e) => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                this.handleCellClick(row, col);
+            });
+        });
+    }
+
+    handleCellClick(row, col) {
+        console.log(`Cell clicked: ${row}, ${col}`);
+    }
+
+    updateBoardDisplay() {
+        const gameBoard = document.querySelector(".game-board");
+        if (!gameBoard) return;
+
+        this.boardState.forEach((row, rowIndex) => {
+            row.forEach((cell, colIndex) => {
+                const cellElement = gameBoard.querySelector(
+                    `.board-cell[data-row="${rowIndex}"][data-col="${colIndex}"]`
+                );
+                if (cellElement) {
+                    cellElement.innerHTML = "";
+
+                    if (cell) {
+                        cellElement.innerHTML = GAME_PIECES[cell].svg;
+                    }
+                }
+            });
+        });
+    }
+
+    handleBoardColors() {
+        const gameBoard = document.querySelector(".game-board");
+        if (!gameBoard) return;
+
+        const hostColor = gameBoard.dataset.hostColor;
+        const guestColor = gameBoard.dataset.guestColor;
+
+        const cells = gameBoard.querySelectorAll(".board-cell");
+        cells.forEach((cell) => {
+            const row = parseInt(cell.dataset.row);
+            const col = parseInt(cell.dataset.col);
+            cell.style.backgroundColor =
+                (row + col) % 2 === 0 ? hostColor : guestColor;
         });
     }
 
@@ -142,11 +212,6 @@ class LobbyManager {
                 e.preventDefault();
                 this.showLeaveConfirmation();
             }
-        });
-
-        window.addEventListener("beforeunload", (e) => {
-            e.preventDefault();
-            return "";
         });
     }
 
@@ -307,4 +372,6 @@ class LobbyManager {
 
 document.addEventListener("DOMContentLoaded", () => {
     window.lobbyManager = new LobbyManager();
+    window.lobbyManager.initializeGameBoard();
+    window.lobbyManager.handleBoardColors();
 });

@@ -45,7 +45,9 @@ class GameModel {
                 guest.username as guest_username,
                 guest.avatar_url as guest_avatar_url,
                 guest.rating as guest_rating,
-                guest.game_piece as guest_game_piece
+                guest.game_piece as guest_game_piece,
+                host.board_color as host_board_color,
+                guest.board_color as guest_board_color
             FROM ttt_games g
             JOIN ttt_users host ON g.host_id = host.id
             LEFT JOIN ttt_users guest ON g.guest_id = guest.id

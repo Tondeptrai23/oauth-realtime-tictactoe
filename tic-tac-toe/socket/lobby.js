@@ -64,9 +64,52 @@ class GameLobbyManager {
             await this.handleGuestLeave(socket, gameId);
         });
 
+        socket.on("game:start", async (gameId) => {
+            await this.handleGameStart(socket, gameId);
+        });
+
         socket.on("disconnect", () => {
             this.handleDisconnect(socket);
         });
+    }
+
+    async handleGameStart(socket, gameId) {
+        const userId = socket.request.session.passport.user;
+
+        try {
+            const game = await db.oneOrNone(
+                "SELECT * FROM ttt_games WHERE id = $1 AND host_id = $2 AND status = 'waiting'",
+                [gameId, userId]
+            );
+
+            if (!game) {
+                socket.emit(
+                    "lobby:error",
+                    "Unauthorized action or invalid game state"
+                );
+                return;
+            }
+
+            if (!game.guest_id) {
+                socket.emit(
+                    "lobby:error",
+                    "Cannot start game without second player"
+                );
+                return;
+            }
+
+            // Update game status to in_progress
+            await db.none(
+                "UPDATE ttt_games SET status = 'in_progress', current_turn = $1, last_move_time = CURRENT_TIMESTAMP WHERE id = $2",
+                [game.host_id, gameId]
+            );
+
+            // Notify all players in the room that the game has started
+            this.io.to(`game:${gameId}`).emit("game:started");
+        } catch (error) {
+            console.error("Error starting game:", error);
+            socket.emit("lobby:error", "Failed to start game");
+        }
     }
 
     async handleForceJoinRequest(socket, gameId) {
@@ -76,7 +119,7 @@ class GameLobbyManager {
             const activeGame = await db.oneOrNone(
                 `SELECT id FROM ttt_games 
                  WHERE (host_id = $1 OR guest_id = $1) 
-                 AND status IN ('waiting', 'in_progress')`,
+                 AND status IN ('waiting', 'in_progress', 'ready')`,
                 [userId]
             );
 
@@ -127,7 +170,7 @@ class GameLobbyManager {
         const activeGame = await db.oneOrNone(
             `SELECT id FROM ttt_games 
              WHERE (host_id = $1 OR guest_id = $1) 
-             AND status IN ('waiting', 'in_progress')`,
+             AND status IN ('waiting', 'in_progress', 'ready')`,
             [userId]
         );
 
@@ -185,10 +228,10 @@ class GameLobbyManager {
                 return;
             }
 
-            await db.none("UPDATE ttt_games SET guest_id = $1 WHERE id = $2", [
-                userId,
-                gameId,
-            ]);
+            await db.none(
+                "UPDATE ttt_games SET guest_id = $1, status = 'ready' WHERE id = $2",
+                [userId, gameId]
+            );
 
             const updatedGame = await db.one(
                 `SELECT g.*, 
@@ -319,7 +362,7 @@ class GameLobbyManager {
             }
 
             await db.none(
-                "UPDATE ttt_games SET guest_id = NULL WHERE id = $1",
+                "UPDATE ttt_games SET guest_id = NULL, status = 'waiting' WHERE id = $1",
                 [gameId]
             );
 
