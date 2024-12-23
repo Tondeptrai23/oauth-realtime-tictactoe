@@ -21,7 +21,6 @@ class HomeChatManager {
         });
 
         this.socket.on("chat:history", (messages) => {
-            console.log("Received chat history:", messages);
             this.loadChatHistory(messages);
         });
 
@@ -76,6 +75,8 @@ class HomeChatManager {
         try {
             const template = this.messageTemplate.content.cloneNode(true);
             const messageContainer = template.querySelector(".chat-message");
+
+            console.log(message);
 
             const avatar = messageContainer.querySelector(".avatar");
             avatar.src =

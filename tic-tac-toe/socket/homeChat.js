@@ -43,14 +43,12 @@ class HomeChatManager {
 
             this.io.emit("chat:message", {
                 id: result.id,
-                user: {
-                    id: user.id,
-                    username: user.username,
-                    nickname: user.nickname,
-                    avatarUrl: user.avatar_url,
-                },
+                user_id: user.id,
+                username: user.username,
+                nickname: user.nickname,
+                avatar_url: user.avatar_url,
                 message: message,
-                timestamp: result.created_at,
+                created_at: result.created_at,
             });
         } catch (error) {
             console.error("Error handling chat message:", error);
