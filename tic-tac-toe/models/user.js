@@ -4,13 +4,16 @@ const https = require("https");
 
 const UserModel = {
     async findById(id) {
-        return db.oneOrNone("SELECT * FROM ttt_users WHERE id = $1", [id]);
+        return db.oneOrNone(`SELECT * FROM ${db.tables.users} WHERE id = $1`, [
+            id,
+        ]);
     },
 
     async findByOAuthId(oauthId) {
-        return db.oneOrNone("SELECT * FROM ttt_users WHERE oauth_id = $1", [
-            oauthId,
-        ]);
+        return db.oneOrNone(
+            `SELECT * FROM ${db.tables.users} WHERE oauth_id = $1`,
+            [oauthId]
+        );
     },
 
     async updateProfile(userId, updates, req) {
@@ -58,7 +61,7 @@ const UserModel = {
         ];
 
         return db.one(
-            `UPDATE ttt_users 
+            `UPDATE ${db.tables.users}
              SET ${setClause} 
              WHERE id = $1 
              RETURNING *`,
@@ -68,7 +71,7 @@ const UserModel = {
 
     async getProfilePicture(userId) {
         const avatar_url = await db.one(
-            "SELECT avatar_url FROM ttt_users WHERE id = $1",
+            `SELECT avatar_url FROM ${db.tables.users} WHERE id = $1`,
             [userId]
         );
 
@@ -77,7 +80,7 @@ const UserModel = {
 
     async getBinaryProfilePicture(userId) {
         const avatar = await db.one(
-            "SELECT avatar FROM ttt_users WHERE id = $1",
+            `SELECT avatar FROM ${db.tables.users} WHERE id = $1`,
             [userId]
         );
 
@@ -85,12 +88,12 @@ const UserModel = {
     },
 
     async updateCustomAvatar(userId, data) {
-        db.none("UPDATE ttt_users SET avatar_url = $1 WHERE id = $2", [
+        db.none(`UPDATE ${db.tables.users} SET avatar_url = $1 WHERE id = $2`, [
             "auth",
             userId,
         ]);
 
-        db.none("UPDATE ttt_users SET avatar = $1 WHERE id = $2", [
+        db.none(`UPDATE ${db.tables.users} SET avatar = $1 WHERE id = $2`, [
             data,
             userId,
         ]);

@@ -4,7 +4,7 @@ class GameModel {
     static async findActiveGameByHostId(hostId) {
         return await db.oneOrNone(
             `SELECT id, host_id, board_size, status, allow_custom_settings
-             FROM ttt_games 
+             FROM ${db.tables.games} 
              WHERE host_id = $1 
              AND status IN ('waiting', 'in_progress', 'ready')`,
             [hostId]
@@ -16,7 +16,7 @@ class GameModel {
         { boardSize, turnTimeLimit, allowCustomSettings }
     ) {
         return await db.one(
-            `INSERT INTO ttt_games 
+            `INSERT INTO ${db.tables.games}
              (host_id, board_size, status, turn_time_limit, allow_custom_settings) 
              VALUES ($1, $2, 'waiting', $3, $4) 
              RETURNING id, host_id, board_size, turn_time_limit, allow_custom_settings`,
@@ -47,23 +47,21 @@ class GameModel {
                 guest.game_piece as guest_game_piece,
                 host.board_color as host_board_color,
                 guest.board_color as guest_board_color
-            FROM ttt_games g
-            JOIN ttt_users host ON g.host_id = host.id
-            LEFT JOIN ttt_users guest ON g.guest_id = guest.id
+            FROM ${db.tables.games} g
+            JOIN ${db.tables.users} host ON g.host_id = host.id
+            LEFT JOIN ${db.tables.users} guest ON g.guest_id = guest.id
             WHERE g.id = $1`,
             [gameId]
         );
     }
 
-    // New methods moved from socket/lobby.js
-
     static async deleteGame(gameId) {
-        await db.none("DELETE FROM ttt_games WHERE id = $1", [gameId]);
+        await db.none(`DELETE FROM ${db.tables.games} WHERE id = $1`, [gameId]);
     }
 
     static async findUserActiveGame(userId) {
         return await db.oneOrNone(
-            `SELECT id FROM ttt_games 
+            `SELECT id FROM ${db.tables.games}
              WHERE (host_id = $1 OR guest_id = $1) 
              AND status IN ('waiting', 'in_progress', 'ready')`,
             [userId]
@@ -71,19 +69,21 @@ class GameModel {
     }
 
     static async getGameAndUserForJoinRequest(gameId, userId) {
-        const game = await db.one("SELECT * FROM ttt_games WHERE id = $1", [
-            gameId,
-        ]);
-        const user = await db.one("SELECT * FROM ttt_users WHERE id = $1", [
-            userId,
-        ]);
+        const game = await db.one(
+            `SELECT * FROM ${db.tables.games} WHERE id = $1`,
+            [gameId]
+        );
+        const user = await db.one(
+            `SELECT * FROM ${db.tables.users} WHERE id = $1`,
+            [userId]
+        );
         return { game, user };
     }
 
     static async approveJoinRequest(gameId, hostId, userId) {
         // Verify host ownership
         const game = await db.one(
-            "SELECT * FROM ttt_games WHERE id = $1 AND host_id = $2",
+            `SELECT * FROM ${db.tables.games} WHERE id = $1 AND host_id = $2`,
             [gameId, hostId]
         );
 
@@ -93,7 +93,7 @@ class GameModel {
 
         // Update game with new guest
         await db.none(
-            "UPDATE ttt_games SET guest_id = $1, status = 'ready' WHERE id = $2",
+            `UPDATE ${db.tables.games} SET guest_id = $1, status = 'ready' WHERE id = $2`,
             [userId, gameId]
         );
 
@@ -103,8 +103,8 @@ class GameModel {
                 guest.username as guest_username,
                 guest.avatar_url as guest_avatar_url,
                 guest.rating as guest_rating
-            FROM ttt_games g
-            JOIN ttt_users guest ON g.guest_id = guest.id
+            FROM ${db.tables.games} g
+            JOIN ${db.tables.users} guest ON g.guest_id = guest.id
             WHERE g.id = $1`,
             [gameId]
         );
@@ -122,7 +122,7 @@ class GameModel {
         }
 
         await db.none(
-            `UPDATE ttt_games 
+            `UPDATE ${db.tables.games}
             SET status = 'in_progress',
                 current_turn = $1,
                 last_move_time = CURRENT_TIMESTAMP
@@ -135,7 +135,7 @@ class GameModel {
 
     static async recordMove(gameId, userId, row, col, moveNumber) {
         await db.none(
-            `INSERT INTO ttt_moves 
+            `INSERT INTO ${db.tables.moves}
             (game_id, user_id, position_x, position_y, move_number) 
             VALUES ($1, $2, $3, $4, $5)`,
             [gameId, userId, col, row, moveNumber]
@@ -146,7 +146,7 @@ class GameModel {
         const game = await this.getGameWithPlayers(gameId);
 
         await db.none(
-            `UPDATE ttt_games 
+            `UPDATE ${db.tables.games}
             SET status = $1, winner_id = $2
             WHERE id = $3`,
             ["completed", winnerId, gameId]
@@ -162,7 +162,7 @@ class GameModel {
         const newLoserRating = Math.max(0, loserRating - 10);
 
         await db.none(
-            `UPDATE ttt_users 
+            `UPDATE ${db.tables.users}
             SET rating = CASE 
                 WHEN id = $1 THEN $3
                 WHEN id = $2 THEN $4
@@ -179,7 +179,7 @@ class GameModel {
 
     static async updateGameAfterDraw(gameId) {
         await db.none(
-            `UPDATE ttt_games 
+            `UPDATE ${db.tables.games}
             SET status = 'draw', winner_id = NULL
             WHERE id = $1`,
             [gameId]
@@ -188,7 +188,7 @@ class GameModel {
 
     static async updateTurn(gameId, nextTurn) {
         await db.none(
-            `UPDATE ttt_games 
+            `UPDATE ${db.tables.games}
             SET current_turn = $1, last_move_time = CURRENT_TIMESTAMP
             WHERE id = $2`,
             [nextTurn, gameId]
@@ -199,8 +199,8 @@ class GameModel {
         const moves = await db.manyOrNone(
             `SELECT m.*, 
                    u.game_piece as piece
-            FROM ttt_moves m
-            JOIN ttt_users u ON m.user_id = u.id
+            FROM ${db.tables.moves} m
+            JOIN ${db.tables.users} u ON m.user_id = u.id
             WHERE m.game_id = $1 
             ORDER BY m.move_number ASC`,
             [gameId]
@@ -214,7 +214,7 @@ class GameModel {
 
     static async handleGuestLeave(gameId, userId) {
         const game = await db.oneOrNone(
-            "SELECT * FROM ttt_games WHERE id = $1 AND guest_id = $2",
+            `SELECT * FROM ${db.tables.games} WHERE id = $1 AND guest_id = $2`,
             [gameId, userId]
         );
 
@@ -223,11 +223,13 @@ class GameModel {
         }
 
         if (game.status === "in_progress") {
-            await db.none("DELETE FROM ttt_moves WHERE game_id = $1", [gameId]);
+            await db.none(`DELETE FROM ${db.tables.moves} WHERE game_id = $1`, [
+                gameId,
+            ]);
         }
 
         await db.none(
-            `UPDATE ttt_games 
+            `UPDATE ${db.tables.games}
              SET guest_id = NULL, 
                  status = 'waiting', 
                  current_turn = NULL, 
@@ -247,17 +249,17 @@ class GameModel {
                     host.game_piece as host_piece,
                     COALESCE(
                         (SELECT COUNT(*) 
-                         FROM ttt_users u 
+                         FROM ${db.tables.users} u 
                          WHERE u.id = ANY(
                              SELECT DISTINCT user_id 
-                             FROM ttt_chat_messages 
+                             FROM ${db.tables.chat_messages}
                              WHERE game_id = g.id
                          )
                         ), 
                         0
                     ) as spectator_count
-             FROM ttt_games g
-             JOIN ttt_users host ON g.host_id = host.id
+             FROM ${db.tables.games} g
+             JOIN ${db.tables.users} host ON g.host_id = host.id
              WHERE g.status IN ('waiting', 'in_progress', 'ready')
              ORDER BY g.created_at DESC`
         );

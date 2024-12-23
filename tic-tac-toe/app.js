@@ -25,6 +25,7 @@ const sessionMiddleware = session({
     store: new pgSession({
         pgPromise: db,
         tableName: "ttt_sessions",
+        schemaName: "s22375",
     }),
     secret:
         process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex"),

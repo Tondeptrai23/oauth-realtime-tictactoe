@@ -10,4 +10,12 @@ const connection = {
 
 const db = pgp(connection);
 
+const tables = {
+    users: `${process.env.SCHEMA}.users`,
+    clients: `${process.env.SCHEMA}.oauth_clients`,
+    sessions: `${process.env.SCHEMA}.user_sessions`,
+    codes: `${process.env.SCHEMA}.auth_codes`,
+};
+
 module.exports = db;
+module.exports.tables = tables;

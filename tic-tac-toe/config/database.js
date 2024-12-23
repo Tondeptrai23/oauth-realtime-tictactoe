@@ -12,4 +12,14 @@ const connection = {
 
 const db = pgp(connection);
 
+const tables = {
+    users: `${process.env.SCHEMA}.ttt_users`,
+    games: `${process.env.SCHEMA}.ttt_games`,
+    moves: `${process.env.SCHEMA}.ttt_moves`,
+    sessions: `${process.env.SCHEMA}.ttt_sessions`,
+    chat_messages: `${process.env.SCHEMA}.ttt_chat_messages`,
+};
+
 module.exports = db;
+
+module.exports.tables = tables;

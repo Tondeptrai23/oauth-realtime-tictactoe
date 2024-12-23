@@ -3,7 +3,7 @@ const db = require("../config/database");
 class ChatMessages {
     static async create(userId, message, gameId = null) {
         return await db.one(
-            `INSERT INTO ttt_chat_messages 
+            `INSERT INTO ${db.tables.chat_messages}
             (user_id, game_id, message) 
             VALUES ($1, $2, $3) 
             RETURNING id, created_at`,
@@ -21,8 +21,8 @@ class ChatMessages {
                 u.username,
                 u.nickname,
                 u.avatar_url
-            FROM ttt_chat_messages cm
-            JOIN ttt_users u ON cm.user_id = u.id
+            FROM ${db.tables.chat_messages} cm
+            JOIN ${db.tables.users} u ON cm.user_id = u.id
             WHERE cm.game_id IS NULL
             ORDER BY cm.created_at ASC
             LIMIT 50
@@ -40,8 +40,8 @@ class ChatMessages {
                 u.username,
                 u.nickname,
                 u.avatar_url
-            FROM ttt_chat_messages cm
-            JOIN ttt_users u ON cm.user_id = u.id
+            FROM ${db.tables.chat_messages} cm
+            JOIN ${db.tables.users} u ON cm.user_id = u.id
             WHERE cm.game_id = $1
             ORDER BY cm.created_at ASC
             LIMIT 50`,
@@ -52,7 +52,7 @@ class ChatMessages {
     static async getUserInfo(userId) {
         return await db.one(
             `SELECT id, username, nickname, avatar_url 
-            FROM ttt_users WHERE id = $1`,
+            FROM ${db.tables.users} WHERE id = $1`,
             [userId]
         );
     }
