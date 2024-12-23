@@ -31,9 +31,14 @@ class LobbyManager {
             leaveConfirmModal: null,
         };
 
+        this.movesHistory = [];
+        this.movesList = document.querySelector(".moves-timeline");
+        this.noMovesMessage = document.getElementById("no-moves-message");
+
         this.initialize();
         this.setupJoinRequestModal();
         this.setupLeaveConfirmModal();
+        this.initializeMovesHistory();
         this.setupNavigationLock();
     }
 
@@ -122,15 +127,136 @@ class LobbyManager {
         this.socket.on("game:state_sync", (data) => {
             this.handleGameStateSync(data);
         });
+
+        this.socket.on("game:move_made", (data) => {
+            this.handleMove(data);
+        });
+
+        this.socket.on("game:state_sync", (data) => {
+            this.handleGameStateSync(data);
+        });
+
+        this.socket.on("game:started", (data) => {
+            this.clearMovesHistory();
+            this.updateMovesDisplay();
+        });
+    }
+
+    initializeMovesHistory() {
+        if (this.movesHistory.length > 0) {
+            this.noMovesMessage.style.display = "none";
+        }
+
+        this.socket.emit("game:request_state", this.gameId);
+    }
+
+    handleMove(data) {
+        const { move, gameState } = data;
+
+        this.addMoveToHistory({
+            moveNumber: this.movesHistory.length + 1,
+            piece: move.piece,
+            position: { row: move.row, col: move.col },
+        });
+
+        if (move && gameState) {
+            this.boardState = gameState.board;
+            this.updateBoardDisplay();
+        }
+    }
+
+    addMoveToHistory(move) {
+        this.movesHistory.push(move);
+        this.updateMovesDisplay();
+    }
+
+    clearMovesHistory() {
+        this.movesHistory = [];
+        if (this.noMovesMessage) {
+            this.noMovesMessage.style.display = "block";
+        }
+        if (this.movesList) {
+            this.movesList.innerHTML = "";
+        }
+    }
+
+    updateMovesDisplay() {
+        if (!this.movesList) {
+            console.error("Moves list element not found");
+            return;
+        }
+
+        if (this.movesHistory.length === 0) {
+            if (this.noMovesMessage) {
+                this.noMovesMessage.style.display = "block";
+            }
+            this.movesList.innerHTML = "";
+            return;
+        }
+
+        if (this.noMovesMessage) {
+            this.noMovesMessage.style.display = "none";
+        }
+
+        const movesHTML = this.movesHistory
+            .map((move, index) => {
+                const isLatestMove = index === this.movesHistory.length - 1;
+                return `
+                <div class="move-item ${
+                    isLatestMove ? "current-move" : ""
+                }" data-move-number="${move.moveNumber}">
+                    <span class="move-number">#${move.moveNumber}</span>
+                    <div class="move-piece">
+                        ${this.getPieceSVG(move.piece)}
+                    </div>
+                    <span class="move-position">
+                        Row ${move.position.row + 1}, Col ${
+                    move.position.col + 1
+                }
+                    </span>
+                </div>
+            `;
+            })
+            .join("");
+
+        this.movesList.innerHTML = movesHTML;
+
+        const movesListContainer = document.querySelector(".moves-list");
+        if (movesListContainer) {
+            movesListContainer.scrollTop = movesListContainer.scrollHeight;
+        }
     }
 
     handleGameStateSync(data) {
+        if (!data || !data.gameState) {
+            console.error("Invalid game state data received");
+            return;
+        }
+
+        this.clearMovesHistory();
+
+        if (data.gameState.board) {
+            let moveNumber = 1;
+            data.gameState.board.forEach((row, rowIndex) => {
+                row.forEach((piece, colIndex) => {
+                    if (piece) {
+                        this.addMoveToHistory({
+                            moveNumber: moveNumber++,
+                            piece: piece,
+                            position: { row: rowIndex, col: colIndex },
+                        });
+                    }
+                });
+            });
+        }
+
         this.boardState = data.gameState.board;
         this.currentTurn = data.currentTurn;
         this.hostPiece = data.hostGamePiece;
         this.guestPiece = data.guestGamePiece;
 
         this.updateBoardDisplay();
+        this.updateMovesDisplay();
 
         this.addTurnIndicator(data.currentTurn);
 
@@ -143,7 +269,9 @@ class LobbyManager {
             parseInt(document.getElementById("userId").innerHTML);
         this.enableBoardInteraction(isMyTurn);
 
-        this.startTurnTimer(data.turnTimeLimit);
+        if (data.turnTimeLimit) {
+            this.startTurnTimer(data.turnTimeLimit);
+        }
     }
 
     initializeGameBoard() {

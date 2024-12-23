@@ -130,3 +130,51 @@
     cursor: not-allowed;
     opacity: 0.7;
 }
+
+.moves-timeline {
+    position: relative;
+}
+
+.move-item {
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.move-item:last-child {
+    margin-bottom: 0;
+}
+
+.move-number {
+    font-weight: bold;
+    min-width: 24px;
+    font-size: 0.9em;
+}
+
+.move-piece {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+}
+
+.move-piece svg {
+    width: 16px;
+    height: 16px;
+}
+
+.move-position {
+    flex-grow: 1;
+    font-size: 0.9em;
+}
+
+.current-move {
+    border-color: #0d6efd;
+    background-color: #f8f9ff;
+}

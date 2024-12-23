@@ -81,6 +81,28 @@ class GameLobbyManager {
         socket.on("game:make_move", async (data) => {
             await this.handleGameMove(socket, data);
         });
+
+        socket.on("game:request_state", async (gameId) => {
+            await this.handleGameStateRequest(socket, gameId);
+        });
+    }
+
+    async handleGameStateRequest(socket, gameId) {
+        try {
+            const gameState = this.gameStates.get(gameId.toString());
+            if (gameState) {
+                const game = await Game.getGameWithPlayers(gameId);
+                socket.emit("game:state_sync", {
+                    gameState,
+                    currentTurn: game.current_turn,
+                    hostGamePiece: game.host_game_piece,
+                    guestGamePiece: game.guest_game_piece,
+                });
+            }
+        } catch (error) {
+            console.error("Error handling game state request:", error);
+            socket.emit("game:error", "Failed to get game state");
+        }
     }
 
     async handleGameMove(socket, data) {
@@ -452,6 +474,7 @@ class GameLobbyManager {
                         turnTimeLimit: gameData.game.turn_time_limit,
                         hostGamePiece: gameData.game.host_game_piece,
                         guestGamePiece: gameData.game.guest_game_piece,
+                        movesHistory: movesHistory,
                     });
                 }
             }

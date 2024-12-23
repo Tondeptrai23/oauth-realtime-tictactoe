@@ -1,6 +1,5 @@
 <div class="container-fluid">
     <div class="row min-vh-100">
-        <!-- Left sidebar - Players -->
         <div class="col-md-2 bg-light border-end p-3">
             <div class="d-flex flex-column h-100">
                 <div class="mb-4">
@@ -55,6 +54,16 @@
                                     Waiting for player...
                                 </div>
                             {{/if}}
+                        </div>
+                    </div>
+                </div>
+                <div class="moves-history mb-4">
+                    <h5 class="mb-3">Move History</h5>
+                    <div class="moves-list bg-light p-2 rounded" style="max-height: 200px; overflow-y: auto;">
+                        <div class="text-center text-muted" id="no-moves-message">
+                            No moves yet
+                        </div>
+                        <div class="moves-timeline">
                         </div>
                     </div>
                 </div>
