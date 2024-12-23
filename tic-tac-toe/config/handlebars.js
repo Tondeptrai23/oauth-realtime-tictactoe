@@ -15,12 +15,13 @@ const helpers = {
         return accum;
     },
 
-    decrementBy: function (a, b) {
+    subtract: function (a, b) {
         return a - b;
     },
 
-    concat: function () {
-        return Array.prototype.slice.call(arguments, 0, -1).join("");
+    concat: function (...args) {
+        args.pop();
+        return args.join("");
     },
 
     increment: function (a) {
