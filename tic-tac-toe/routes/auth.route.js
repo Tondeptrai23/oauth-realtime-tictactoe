@@ -73,7 +73,7 @@ router.get("/login", (req, res) => {
     });
 });
 
-router.get("/logout", (req, res, next) => {
+router.get("/auth/logout", (req, res, next) => {
     if (req.session.passport) {
         delete req.session.passport.oauth;
     }

@@ -195,6 +195,11 @@ class OAuthController {
                 });
             }
 
+            const user = await db.one(
+                "SELECT username FROM users WHERE id = $1",
+                [req.session.userId]
+            );
+
             const requestedScopes = scope ? scope.split(" ") : ["profile:full"];
 
             res.render("authorize", {
@@ -204,6 +209,7 @@ class OAuthController {
                 client_id,
                 redirect_uri,
                 state,
+                user,
             });
         } catch (error) {
             console.error("Consent page error:", error);
