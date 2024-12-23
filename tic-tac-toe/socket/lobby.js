@@ -690,12 +690,28 @@ class GameLobbyManager {
                 return;
             }
 
+            if (game.status === "in_progress") {
+                await db.none("DELETE FROM ttt_moves WHERE game_id = $1", [
+                    gameId,
+                ]);
+            }
+
             await db.none(
-                "UPDATE ttt_games SET guest_id = NULL, status = 'waiting' WHERE id = $1",
+                `UPDATE ttt_games 
+                 SET guest_id = NULL, 
+                     status = 'waiting', 
+                     current_turn = NULL, 
+                     last_move_time = NULL
+                 WHERE id = $1`,
                 [gameId]
             );
 
-            this.io.to(`game:${gameId}`).emit("lobby:guest_left");
+            this.gameStates.delete(gameId.toString());
+
+            this.io.to(`game:${gameId}`).emit("lobby:guest_left", {
+                gameId,
+                wasInProgress: game.status === "in_progress",
+            });
 
             await this.broadcastLobbyState(gameId);
 

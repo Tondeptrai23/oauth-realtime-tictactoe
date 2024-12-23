@@ -99,7 +99,8 @@ class LobbyManager {
             window.location.href = "/";
         });
 
-        this.socket.on("lobby:guest_left", () => {
+        this.socket.on("lobby:guest_left", (data) => {
+            this.clearMovesHistory();
             window.location.reload();
         });
 
@@ -172,11 +173,16 @@ class LobbyManager {
 
     clearMovesHistory() {
         this.movesHistory = [];
-        if (this.noMovesMessage) {
-            this.noMovesMessage.style.display = "block";
+        const movesList = document.querySelector(".moves-timeline");
+        const noMovesMessage = document.getElementById("no-moves-message");
+
+        if (movesList) {
+            movesList.innerHTML = "";
         }
-        if (this.movesList) {
-            this.movesList.innerHTML = "";
+
+        if (noMovesMessage) {
+            noMovesMessage.style.display = "block";
+            noMovesMessage.textContent = "No moves have been made yet.";
         }
     }
 
