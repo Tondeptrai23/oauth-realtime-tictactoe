@@ -7,6 +7,7 @@ class LobbyManager {
         this.isSpectator =
             document.querySelector(".game-header")?.dataset.isSpectator ===
             "true";
+        this.allowCustom = false;
         const gameEndModalEl = document.getElementById("gameEndModal");
         this.gameEndModal = new bootstrap.Modal(gameEndModalEl);
 
@@ -162,6 +163,7 @@ class LobbyManager {
         this.currentTurn = data.currentTurn;
         this.hostPiece = data.hostGamePiece;
         this.guestPiece = data.guestGamePiece;
+        this.allowCustom = data.gameState.allowCustomSettings;
 
         this.addTurnIndicator(data.currentTurn);
 
@@ -237,7 +239,9 @@ class LobbyManager {
             parseInt(document.getElementById("userId").innerHTML);
         this.enableBoardInteraction(isMyTurn);
 
-        this.startTurnTimer(data.turnTimeLimit);
+        if (data.reason === "timer_expired") {
+            this.startTurnTimer(data.turnTimeLimit);
+        }
     }
 
     handleCellClick(row, col) {
@@ -245,7 +249,20 @@ class LobbyManager {
             return;
         }
 
-        const currentPiece = this.isHost ? this.hostPiece : this.guestPiece;
+        let currentPiece;
+        if (this.isHost) {
+            if (this.allowCustom) {
+                currentPiece = this.hostPiece;
+            } else {
+                currentPiece = "X";
+            }
+        } else {
+            if (this.allowCustom) {
+                currentPiece = this.guestPiece;
+            } else {
+                currentPiece = "O";
+            }
+        }
         this.boardState[row][col] = currentPiece;
 
         this.socket.emit("game:make_move", {
@@ -336,8 +353,17 @@ class LobbyManager {
         const gameBoard = document.querySelector(".game-board");
         if (!gameBoard) return;
 
-        const hostColor = gameBoard.dataset.hostColor;
-        const guestColor = gameBoard.dataset.guestColor;
+        let hostColor;
+        let guestColor;
+
+        this.allowCustom = gameBoard.dataset.allowCustom;
+        if (gameBoard.dataset.allowCustom) {
+            hostColor = gameBoard.dataset.hostColor;
+            guestColor = gameBoard.dataset.guestColor;
+        } else {
+            hostColor = "#f0f0f0";
+            guestColor = "#838383";
+        }
 
         const cells = gameBoard.querySelectorAll(".board-cell");
         cells.forEach((cell) => {

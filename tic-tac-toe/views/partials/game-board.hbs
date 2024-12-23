@@ -2,6 +2,7 @@
     {{#if (and game.host_id game.guest_id)}}
         <div class="game-board position-relative {{#if isSpectator}}spectator-mode{{/if}}"
             data-board-size="{{game.board_size}}"
+            data-allow-custom="{{game.allow_custom_settings}}"
             data-host-color="{{game.host_board_color}}"
             data-guest-color="{{game.guest_board_color}}">
             {{#each (range 0 game.board_size)}}

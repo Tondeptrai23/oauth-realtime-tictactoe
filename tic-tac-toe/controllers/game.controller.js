@@ -53,7 +53,7 @@ class GameController {
             const game = await Game.create(req.user.id, {
                 boardSize,
                 turnTimeLimit,
-                allowCustomSettings: allowCustomSettings === "true",
+                allowCustomSettings: allowCustomSettings === true,
             });
 
             req.app.get("io").emit("game:created", game);
