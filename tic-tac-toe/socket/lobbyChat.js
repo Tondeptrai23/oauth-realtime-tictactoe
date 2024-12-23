@@ -1,4 +1,4 @@
-const db = require("../config/database");
+const ChatMessages = require("../models/chat-messages");
 
 class LobbyMessageManager {
     constructor(io, onlineUsersManager) {
@@ -34,19 +34,8 @@ class LobbyMessageManager {
         const { gameId, message } = data;
 
         try {
-            const result = await db.one(
-                `INSERT INTO ttt_chat_messages 
-                (user_id, game_id, message) 
-                VALUES ($1, $2, $3) 
-                RETURNING id, created_at`,
-                [userId, gameId, message]
-            );
-
-            const user = await db.one(
-                `SELECT id, username, nickname, avatar_url 
-                FROM ttt_users WHERE id = $1`,
-                [userId]
-            );
+            const result = await ChatMessages.create(userId, message, gameId);
+            const user = await ChatMessages.getUserInfo(userId);
 
             const messageData = {
                 id: result.id,
@@ -70,23 +59,7 @@ class LobbyMessageManager {
         if (!gameId) return;
 
         try {
-            const messages = await db.manyOrNone(
-                `SELECT 
-                    cm.id,
-                    cm.message,
-                    cm.created_at,
-                    u.id as user_id,
-                    u.username,
-                    u.nickname,
-                    u.avatar_url
-                FROM ttt_chat_messages cm
-                JOIN ttt_users u ON cm.user_id = u.id
-                WHERE cm.game_id = $1
-                ORDER BY cm.created_at ASC
-                LIMIT 50`,
-                [gameId]
-            );
-
+            const messages = await ChatMessages.getGameMessages(gameId);
             socket.emit("lobby:message_history", messages);
         } catch (error) {
             console.error("Error fetching lobby chat history:", error);

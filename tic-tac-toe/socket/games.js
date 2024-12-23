@@ -1,4 +1,4 @@
-const db = require("../config/database");
+const Game = require("../models/game");
 
 class GamesManager {
     constructor(io, onlineUsersManager) {
@@ -26,60 +26,21 @@ class GamesManager {
 
     async sendActiveGames(socket) {
         try {
-            const games = await db.manyOrNone(
-                `SELECT g.*,
-                        host.username as host_username,
-                        host.avatar_url as host_avatar_url,
-                        host.game_piece as host_piece,
-                        COALESCE(
-                            (SELECT COUNT(*) 
-                             FROM ttt_users u 
-                             WHERE u.id = ANY(
-                                 SELECT DISTINCT user_id 
-                                 FROM ttt_chat_messages 
-                                 WHERE game_id = g.id
-                             )
-                            ), 
-                            0
-                        ) as spectator_count
-                 FROM ttt_games g
-                 JOIN ttt_users host ON g.host_id = host.id
-                 WHERE g.status IN ('waiting', 'in_progress', 'ready')
-                 ORDER BY g.created_at DESC`
-            );
-
+            const games = await Game.getActiveGames();
             socket.emit("games:list", games);
         } catch (error) {
             console.error("Error fetching games:", error);
+            socket.emit("games:error", "Failed to fetch games list");
         }
     }
 
     async broadcastGamesList() {
         try {
-            const games = await db.manyOrNone(
-                `SELECT g.*, 
-                        host.username as host_username,
-                        host.avatar_url as host_avatar_url,
-                        COALESCE(
-                            (SELECT COUNT(*) 
-                             FROM ttt_users u 
-                             WHERE u.id = ANY(
-                                 SELECT DISTINCT user_id 
-                                 FROM ttt_chat_messages 
-                                 WHERE game_id = g.id
-                             )
-                            ), 
-                            0
-                        ) as spectator_count
-                 FROM ttt_games g
-                 JOIN ttt_users host ON g.host_id = host.id
-                 WHERE g.status IN ('waiting', 'in_progress', 'ready')
-                 ORDER BY g.created_at DESC`
-            );
-
+            const games = await Game.getActiveGames();
             this.io.emit("games:list", games);
         } catch (error) {
             console.error("Error broadcasting games:", error);
+            this.io.emit("games:error", "Failed to update games list");
         }
     }
 }

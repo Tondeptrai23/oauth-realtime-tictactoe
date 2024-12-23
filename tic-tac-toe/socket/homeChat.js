@@ -1,4 +1,4 @@
-const db = require("../config/database");
+const ChatMessages = require("../models/chat-messages");
 
 class HomeChatManager {
     constructor(io, onlineUsersManager) {
@@ -33,13 +33,7 @@ class HomeChatManager {
         if (!user) return;
 
         try {
-            const result = await db.one(
-                `INSERT INTO ttt_chat_messages 
-                (user_id, message) 
-                VALUES ($1, $2) 
-                RETURNING id, created_at`,
-                [user.id, message]
-            );
+            const result = await ChatMessages.create(user.id, message);
 
             this.io.emit("chat:message", {
                 id: result.id,
@@ -58,23 +52,7 @@ class HomeChatManager {
 
     async sendChatHistory(socket) {
         try {
-            const messages = await db.manyOrNone(
-                `SELECT 
-                    cm.id,
-                    cm.message,
-                    cm.created_at,
-                    u.id as user_id,
-                    u.username,
-                    u.nickname,
-                    u.avatar_url
-                FROM ttt_chat_messages cm
-                JOIN ttt_users u ON cm.user_id = u.id
-                WHERE cm.game_id IS NULL
-                ORDER BY cm.created_at ASC
-                LIMIT 50
-                FOR UPDATE`
-            );
-
+            const messages = await ChatMessages.getHomeMessages();
             socket.emit("chat:history", messages);
         } catch (error) {
             console.error("Error fetching chat history:", error);

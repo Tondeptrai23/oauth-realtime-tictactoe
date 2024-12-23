@@ -1,4 +1,5 @@
-const db = require("../config/database");
+const User = require("../models/user");
+
 class OnlineUsersManager {
     constructor(io) {
         this.io = io;
@@ -19,14 +20,7 @@ class OnlineUsersManager {
         }
 
         try {
-            const user = await db.one(
-                `
-                SELECT id, username, nickname, avatar_url, rating, game_piece, board_color 
-                FROM ttt_users 
-                WHERE id = $1
-            `,
-                [userId]
-            );
+            const user = await User.findById(userId);
 
             this.onlineUsers.set(socket.id, {
                 ...user,

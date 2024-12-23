@@ -76,8 +76,6 @@ class HomeChatManager {
             const template = this.messageTemplate.content.cloneNode(true);
             const messageContainer = template.querySelector(".chat-message");
 
-            console.log(message);
-
             const avatar = messageContainer.querySelector(".avatar");
             avatar.src =
                 message.avatar_url === "auth"
