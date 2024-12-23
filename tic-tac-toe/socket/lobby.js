@@ -79,7 +79,6 @@ class GameLobbyManager {
         });
 
         socket.on("game:make_move", async (data) => {
-            console.log(data);
             await this.handleGameMove(socket, data);
         });
     }
@@ -114,6 +113,13 @@ class GameLobbyManager {
             gameState.board[row][col] = piece;
             gameState.moveCount++;
 
+            await db.none(
+                `INSERT INTO ttt_moves 
+                (game_id, user_id, position_x, position_y, move_number) 
+                VALUES ($1, $2, $3, $4, $5)`,
+                [gameId, userId, col, row, gameState.moveCount]
+            );
+
             const isWin = this.checkWin(gameState.board, { row, col }, piece);
             const isDraw = !isWin && this.checkDraw(gameState.board);
 
@@ -129,13 +135,45 @@ class GameLobbyManager {
                     ]
                 );
 
+                if (isWin) {
+                    const winner = userId === game.host_id ? "host" : "guest";
+                    const loser = winner === "host" ? "guest" : "host";
+                    const winnerRating = game[`${winner}_rating`];
+                    const loserRating = game[`${loser}_rating`];
+
+                    const newWinnerRating = winnerRating + 10;
+                    const newLoserRating = Math.max(0, loserRating - 10);
+
+                    await db.none(
+                        `UPDATE ttt_users 
+                        SET rating = CASE 
+                            WHEN id = $1 THEN $3
+                            WHEN id = $2 THEN $4
+                        END
+                        WHERE id IN ($1, $2)`,
+                        [
+                            game[`${winner}_id`],
+                            game[`${loser}_id`],
+                            newWinnerRating,
+                            newLoserRating,
+                        ]
+                    );
+                }
+
                 this.io.to(`game:${gameId}`).emit("game:ended", {
                     gameState,
                     winner: isWin ? userId : null,
+                    winnerName: isWin
+                        ? userId === game.host_id
+                            ? game.host_username
+                            : game.guest_username
+                        : null,
                     isDraw,
                 });
 
-                this.gameStates.delete(gameId.toString());
+                setTimeout(() => {
+                    this.gameStates.delete(gameId.toString());
+                }, 1000);
             } else {
                 const nextTurn =
                     userId === game.host_id ? game.guest_id : game.host_id;
@@ -158,6 +196,7 @@ class GameLobbyManager {
 
                 this.io.to(`game:${gameId}`).emit("game:turn_change", {
                     currentTurn: nextTurn,
+                    turnTimeLimit: game.turn_time_limit,
                 });
 
                 this.io.to(`game:${gameId}`).emit("game:turn_timer_start", {
@@ -236,8 +275,6 @@ class GameLobbyManager {
                 currentTurn: game.host_id,
                 turnTimeLimit: game.turn_time_limit,
             });
-
-            console.log(`Game ${gameId} started successfully`);
         } catch (error) {
             console.error("Error starting game:", error);
             socket.emit("game:error", "Failed to start game");

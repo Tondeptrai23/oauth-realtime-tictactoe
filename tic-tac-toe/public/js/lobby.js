@@ -7,6 +7,18 @@ class LobbyManager {
         this.isSpectator =
             document.querySelector(".game-header")?.dataset.isSpectator ===
             "true";
+        const gameEndModalEl = document.getElementById("gameEndModal");
+        this.gameEndModal = new bootstrap.Modal(gameEndModalEl);
+
+        gameEndModalEl.addEventListener("hidden.bs.modal", () => {
+            window.location.href = "/";
+        });
+
+        document
+            .getElementById("backToLobbyBtn")
+            .addEventListener("click", () => {
+                this.gameEndModal.hide();
+            });
 
         this.spectatorsList = document.querySelector(".spectators-list");
         this.spectatorCount = document.querySelector(".spectator-count");
@@ -100,6 +112,10 @@ class LobbyManager {
 
         this.socket.on("game:turn_timer_start", (data) => {
             this.startTurnTimer(data.turnTimeLimit);
+        });
+
+        this.socket.on("game:ended", (data) => {
+            this.handleGameEnd(data);
         });
     }
 
@@ -230,6 +246,7 @@ class LobbyManager {
         }
 
         const currentPiece = this.isHost ? this.hostPiece : this.guestPiece;
+        this.boardState[row][col] = currentPiece;
 
         this.socket.emit("game:make_move", {
             gameId: this.gameId,
@@ -237,6 +254,51 @@ class LobbyManager {
             col: col,
             piece: currentPiece,
         });
+    }
+
+    handleGameEnd(data) {
+        this.boardState = data.gameState.board;
+        this.updateBoardDisplay();
+
+        setTimeout(() => {
+            this.enableBoardInteraction(false);
+
+            if (this.turnTimer) {
+                clearInterval(this.turnTimer);
+                const timerDisplay = document.querySelector(".time-remaining");
+                if (timerDisplay) {
+                    timerDisplay.textContent = "Game Over";
+                }
+            }
+
+            const titleElement = document.getElementById("gameEndTitle");
+            const messageElement = document.getElementById("gameEndMessage");
+            const ratingUpdateElement = document.getElementById("ratingUpdate");
+
+            if (data.isDraw) {
+                titleElement.textContent = "It's a Draw!";
+                messageElement.textContent =
+                    "The game ended in a draw. Both players played well!";
+                ratingUpdateElement.textContent =
+                    "No rating changes for a draw.";
+            } else {
+                const winner = data.winnerName;
+                titleElement.textContent = `${winner} Wins!`;
+                messageElement.textContent = `Congratulations to ${winner} for winning the game!`;
+                ratingUpdateElement.innerHTML =
+                    "Rating Update:<br>" +
+                    `Winner: +10 points<br>` +
+                    `Loser: -10 points`;
+            }
+
+            this.gameEndModal.show();
+
+            const statusBadge = document.querySelector(".game-status .badge");
+            if (statusBadge) {
+                statusBadge.textContent = data.isDraw ? "Draw" : "Game Over";
+                statusBadge.className = "badge bg-secondary";
+            }
+        }, 500);
     }
 
     updateBoardDisplay() {
