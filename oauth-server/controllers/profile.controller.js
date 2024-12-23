@@ -5,15 +5,9 @@ const ProfileModel = require("../models/profile.model");
 class ProfileController {
     async getProfile(req, res) {
         try {
-            if (!req.oauth || !req.oauth.scope) {
-                return res.status(403).json({ error: "No scope provided" });
-            }
-
-            if (!req.oauth.scope.includes("profile:basic")) {
-                return res.status(403).json({ error: "Insufficient scope" });
-            }
-
-            const user = await ProfileModel.getProfile(req.user.user_id);
+            const user = await ProfileModel.getProfile(
+                req.user.id || req.oauth.user_id
+            );
             res.json(user);
         } catch (error) {
             console.error("Get profile error:", error);
@@ -25,7 +19,7 @@ class ProfileController {
 
     async getProfilePicture(req, res) {
         try {
-            const user = await ProfileModel.getAvatar(req.user.user_id);
+            const user = await ProfileModel.getAvatar(req.user.id);
 
             if (!user.avatar) {
                 user.avatar = fs.readFileSync(
@@ -78,7 +72,28 @@ class ProfileController {
 
     async getAvatar(req, res) {
         try {
-            const result = await ProfileModel.getAvatar(req.params.userId);
+            if (!req.oauth || !req.oauth.scope) {
+                return res.status(403).json({ error: "No scope provided" });
+            }
+
+            if (!req.oauth.scope.includes("profile:full")) {
+                const defaultAvatar = fs.readFileSync(
+                    path.join(__dirname, "../public/images/default-avatar.png")
+                );
+                res.set("Content-Type", "image/png");
+                return res.send(defaultAvatar);
+            }
+
+            const user = await ProfileModel.getAvatar(req.oauth.user_id);
+            if (!user || !user.avatar) {
+                const defaultAvatar = fs.readFileSync(
+                    path.join(__dirname, "../public/images/default-avatar.png")
+                );
+                res.set("Content-Type", "image/png");
+                return res.send(defaultAvatar);
+            }
+
+            const result = await ProfileModel.getAvatar(req.oauth.user_id);
 
             if (!result || !result.avatar) {
                 return res.status(404).send();

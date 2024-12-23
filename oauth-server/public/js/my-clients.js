@@ -3,6 +3,14 @@ $(document).ready(function () {
     const loadingSpinner = $("#loadingSpinner");
     const template = document.getElementById("clientCardTemplate");
 
+    function getScopeDescription(scope) {
+        const descriptions = {
+            "profile:basic": "Basic Profile (username, fullname)",
+            "profile:full": "Full Profile (includes profile picture)",
+        };
+        return descriptions[scope] || scope;
+    }
+
     function createClientCard(client) {
         const clone = template.content.cloneNode(true);
         const card = $(clone.querySelector(".client-card"));
@@ -15,10 +23,24 @@ $(document).ready(function () {
         card.find(".website-url").text(client.website_url || "Not specified");
         card.find(".redirect-uri").text(client.redirect_uri);
 
+        const scopesList = card.find(".scopes-list");
+        client.allowed_scopes.forEach((scope) => {
+            scopesList.append(
+                $("<div>", {
+                    class: "badge bg-primary me-1",
+                    text: getScopeDescription(scope),
+                })
+            );
+        });
+
         const form = card.find(".update-client-form");
         form.find('input[name="name"]').val(client.name);
         form.find('input[name="websiteUrl"]').val(client.website_url);
         form.find('input[name="redirectUri"]').val(client.redirect_uri);
+
+        client.allowed_scopes.forEach((scope) => {
+            form.find(`input[value="${scope}"]`).prop("checked", true);
+        });
 
         return card;
     }
@@ -98,10 +120,20 @@ $(document).ready(function () {
         const card = form.closest(".client-card");
         const clientId = card.data("client-id");
 
+        const scopes = [];
+        form.find('input[name="scopes[]"]:checked').each(function () {
+            scopes.push($(this).val());
+        });
+
+        if (!scopes.includes("profile:basic")) {
+            scopes.push("profile:basic");
+        }
+
         const formData = {
             name: form.find('input[name="name"]').val(),
             websiteUrl: form.find('input[name="websiteUrl"]').val(),
             redirectUri: form.find('input[name="redirectUri"]').val(),
+            scopes: scopes,
         };
 
         $.ajax({

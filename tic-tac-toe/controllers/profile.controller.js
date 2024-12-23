@@ -1,6 +1,7 @@
 const UserModel = require("../models/user");
 const axios = require("axios");
 const https = require("https");
+const path = require("path");
 const fs = require("fs");
 const {
     STATIC_AVATARS,
@@ -94,7 +95,11 @@ class ProfileController {
             }
 
             res.setHeader("Content-Type", "image/png");
-            return res.send(fs.readFileSync(`${avatar_url}`));
+            return res.send(
+                fs.readFileSync(
+                    path.join(__dirname, "../", "public", avatar_url)
+                )
+            );
         } catch (error) {
             console.error("Error fetching profile data:", error);
         }
@@ -109,7 +114,7 @@ class ProfileController {
             });
 
             const response = await axiosInstance.get(
-                process.env.AUTH_SERVER_PROFILE_URL + "/avatar",
+                process.env.AUTH_SERVER_PROFILE_AVATAR_URL,
                 {
                     headers: {
                         Authorization: `Bearer ${req.user.accessToken}`,

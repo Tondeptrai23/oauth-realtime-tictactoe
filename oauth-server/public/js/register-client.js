@@ -7,20 +7,33 @@ $(document).ready(function () {
         window.location.href = "/login";
     }
 
-    $("$closeModal").on("click", function () {
+    $("#closeModal").on("click", function () {
         $("#registerClientForm")[0].reset();
 
         window.location.href = "/my-clients";
     });
 
+    $("#scope-profile-basic").on("change", function () {
+        if (!$(this).is(":checked")) {
+            $(this).prop("checked", true);
+            alert("Basic profile scope is required");
+        }
+    });
+
     $("#registerClientForm").on("submit", function (e) {
         e.preventDefault();
+
+        const selectedScopes = [];
+        $('input[name="scopes[]"]:checked').each(function () {
+            selectedScopes.push($(this).val());
+        });
 
         const formData = {
             name: $("#name").val(),
             description: $("#description").val(),
             websiteUrl: $("#websiteUrl").val(),
             redirectUri: $("#redirectUri").val(),
+            scopes: selectedScopes,
         };
 
         $.ajax({

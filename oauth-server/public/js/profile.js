@@ -30,7 +30,34 @@ function loadProfile() {
         return;
     }
 
-    $("#avatarPreview").attr("src", `/api/profile/avatar/${userId}`);
+    $.ajax({
+        url: `/api/profile/avatar`,
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        xhrFields: {
+            responseType: "arraybuffer",
+        },
+        processData: false,
+        success: function (response) {
+            const base64String = btoa(
+                new Uint8Array(response).reduce(
+                    (data, byte) => data + String.fromCharCode(byte),
+                    ""
+                )
+            );
+
+            $("#avatarPreview").attr(
+                "src",
+                `data:image/png;base64,${base64String}`
+            );
+        },
+        error: function (xhr) {
+            const error = xhr.responseJSON?.error || "Failed to load avatar";
+            alert(error);
+        },
+    });
 
     $.ajax({
         url: "/api/profile",

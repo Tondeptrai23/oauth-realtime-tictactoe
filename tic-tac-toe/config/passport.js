@@ -15,7 +15,7 @@ function initializePassport(passport) {
     passport.deserializeUser(async (id, done) => {
         try {
             const user = await db.one(
-                "SELECT * FROM ttt_users WHERE id = $1",
+                `SELECT * FROM ${db.tables.users} WHERE id = $1`,
                 id
             );
             done(null, user);
@@ -55,13 +55,13 @@ function initializePassport(passport) {
                 const profileData = await response.json();
 
                 let user = await db.oneOrNone(
-                    "SELECT * FROM ttt_users WHERE oauth_id = '$1'",
+                    `SELECT * FROM ${db.tables.users} WHERE oauth_id = '$1'`,
                     [profileData.id]
                 );
 
                 if (!user) {
                     user = await db.one(
-                        `INSERT INTO ttt_users (oauth_id, username, avatar_url) 
+                        `INSERT INTO ${db.tables.users} (oauth_id, username, avatar_url) 
                          VALUES ($1, $2, $3) RETURNING *`,
                         [
                             profileData.id,
@@ -119,8 +119,6 @@ function initializePassport(passport) {
                     console.error("Token request failed:", error);
                     return callback(error);
                 }
-
-                console.log("Token response:", data);
 
                 let results;
                 try {

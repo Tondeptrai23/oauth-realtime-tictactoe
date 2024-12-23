@@ -18,6 +18,10 @@ router.put(
     handleMulterError,
     ProfileController.updateAvatar
 );
-router.get("/avatar/:userId", ProfileController.getAvatar);
+router.get(
+    "/avatar/oauth",
+    AuthMiddleware.validateToken,
+    ProfileController.getAvatar
+);
 
 module.exports = router;

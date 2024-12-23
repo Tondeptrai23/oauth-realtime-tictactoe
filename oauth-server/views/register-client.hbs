@@ -38,8 +38,7 @@
                                 pattern="https?://.*"
                             />
                             <small class="form-text text-muted">
-                                Must include http:// or https:// protocol (e.g.,
-                                http://localhost:5173/callback)
+                                Must include http:// or https:// protocol
                             </small>
                         </div>
 
@@ -55,10 +54,49 @@
                                 pattern="https?://.*"
                                 required
                             />
-                            <div class="form-text">
-                                The URI where users will be redirected after
-                                authorization. Must include http:// or https://
-                                protocol (e.g., http://localhost:5173/callback)
+                            <small class="form-text text-muted">
+                                Must include http:// or https:// protocol. This
+                                is the URI where the user will be redirected
+                                after granting permission.
+                            </small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">
+                                Scopes *
+                            </label>
+                            <div class="form-check">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    value="profile:basic"
+                                    id="scope-profile-basic"
+                                    name="scopes[]"
+                                    checked
+                                    required
+                                />
+                                <label
+                                    class="form-check-label"
+                                    for="scope-profile-basic"
+                                >
+                                    Basic Profile (username, fullname) -
+                                    Required
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    value="profile:full"
+                                    id="scope-profile-full"
+                                    name="scopes[]"
+                                />
+                                <label
+                                    class="form-check-label"
+                                    for="scope-profile-full"
+                                >
+                                    Full Profile (includes profile picture)
+                                </label>
                             </div>
                         </div>
 
@@ -107,13 +145,8 @@
                                     id="clientSecret"
                                     readonly
                                 />
-                                <small class="form-text text-muted">
-                                    Must include http:// or https:// protocol
-                                    (e.g., http://localhost:5173/callback)
-                                </small>
                             </div>
                         </div>
-
                         <div class="modal-footer">
                             <button
                                 type="button"
@@ -129,5 +162,5 @@
             </div>
         </div>
     </div>
-    <script src="public/js/client.js"></script>
+    <script src="public/js/register-client.js"></script>
 </div>

@@ -13,12 +13,28 @@ class OAuthController {
 
     async registerClient(req, res) {
         try {
-            const { name, websiteUrl, redirectUri } = req.body;
+            const { name, websiteUrl, redirectUri, scopes } = req.body;
             const userId = req.user.id;
 
-            if (!name || !redirectUri) {
+            if (!name || !redirectUri || !scopes || !scopes.length) {
                 return res.status(400).json({
-                    error: "Name and redirect URI are required",
+                    error: "Name, redirect URI, and at least one scope are required",
+                });
+            }
+
+            const validScopes = ["profile:basic", "profile:full"];
+            const invalidScopes = scopes.filter(
+                (scope) => !validScopes.includes(scope)
+            );
+            if (invalidScopes.length > 0) {
+                return res.status(400).json({
+                    error: `Invalid scopes: ${invalidScopes.join(", ")}`,
+                });
+            }
+
+            if (!scopes.includes("profile:basic")) {
+                return res.status(400).json({
+                    error: "profile:basic scope is required",
                 });
             }
 
@@ -30,7 +46,8 @@ class OAuthController {
                 name,
                 userId,
                 websiteUrl,
-                redirectUri
+                redirectUri,
+                scopes
             );
 
             res.status(201).json({
@@ -80,14 +97,43 @@ class OAuthController {
         try {
             const { clientId } = req.params;
             const userId = req.user.id;
-            const { name, websiteUrl, redirectUri } = req.body;
+            const { name, websiteUrl, redirectUri, scopes } = req.body;
+
+            if (!name || !redirectUri) {
+                return res.status(400).json({
+                    error: "Name and redirect URI are required",
+                });
+            }
+
+            if (!scopes || !Array.isArray(scopes) || scopes.length === 0) {
+                return res.status(400).json({
+                    error: "At least one scope is required",
+                });
+            }
+
+            const validScopes = ["profile:basic", "profile:full"];
+            const invalidScopes = scopes.filter(
+                (scope) => !validScopes.includes(scope)
+            );
+            if (invalidScopes.length > 0) {
+                return res.status(400).json({
+                    error: `Invalid scopes: ${invalidScopes.join(", ")}`,
+                });
+            }
+
+            if (!scopes.includes("profile:basic")) {
+                return res.status(400).json({
+                    error: "profile:basic scope is required",
+                });
+            }
 
             const updatedClient = await OAuthModel.updateClient(
                 clientId,
                 userId,
                 name,
                 websiteUrl,
-                redirectUri
+                redirectUri,
+                scopes
             );
 
             res.json({ client: updatedClient });
@@ -118,6 +164,21 @@ class OAuthController {
                 return res.status(400).render("error", {
                     layout: "oauth",
                     message: "Invalid client or redirect URI",
+                });
+            }
+
+            const requestedScopes = scope
+                ? scope.split(" ")
+                : ["profile:basic"];
+            const isValidScope = await OAuthModel.validateRequestedScopes(
+                client_id,
+                requestedScopes
+            );
+
+            if (!isValidScope) {
+                return res.status(400).render("error", {
+                    layout: "oauth",
+                    message: "Invalid or unauthorized scope requested",
                 });
             }
 
@@ -169,12 +230,24 @@ class OAuthController {
             }
 
             const user = await UserModel.getUserById(req.session.userId);
-            const requestedScopes = scope ? scope.split(" ") : ["profile:full"];
+            const requestedScopes = scope
+                ? scope.split(" ")
+                : ["profile:basic"];
+
+            const scopeDescriptions = {
+                "profile:basic":
+                    "Basic profile information (username, fullname)",
+                "profile:full":
+                    "Full profile access (including profile picture)",
+            };
 
             res.render("authorize", {
                 layout: "oauth",
                 client,
-                scope: requestedScopes,
+                scopes: requestedScopes.map((scope) => ({
+                    name: scope,
+                    description: scopeDescriptions[scope],
+                })),
                 client_id,
                 redirect_uri,
                 state,

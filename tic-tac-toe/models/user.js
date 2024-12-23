@@ -25,7 +25,7 @@ const UserModel = {
             });
 
             const response = await axiosInstance.get(
-                process.env.AUTH_SERVER_PROFILE_URL + "/avatar",
+                process.env.AUTH_SERVER_PROFILE_AVATAR_URL,
                 {
                     headers: {
                         Authorization: `Bearer ${req.user.accessToken}`,
