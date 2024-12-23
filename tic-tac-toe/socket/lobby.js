@@ -1,10 +1,12 @@
 const db = require("../config/database");
+const Game = require("../models/game");
 
 class GameLobbyManager {
     constructor(io, onlineUsersManager) {
         this.io = io;
         this.onlineUsersManager = onlineUsersManager;
         this.gameRooms = new Map();
+        this.gameStates = new Map();
     }
 
     initialize() {
@@ -64,50 +66,248 @@ class GameLobbyManager {
             await this.handleGuestLeave(socket, gameId);
         });
 
+        socket.on("disconnect", () => {
+            this.handleDisconnect(socket);
+        });
+
         socket.on("game:start", async (gameId) => {
             await this.handleGameStart(socket, gameId);
         });
 
-        socket.on("disconnect", () => {
-            this.handleDisconnect(socket);
+        socket.on("game:turn_expired", async (gameId) => {
+            await this.handleTurnExpired(socket, gameId);
+        });
+
+        socket.on("game:make_move", async (data) => {
+            console.log(data);
+            await this.handleGameMove(socket, data);
         });
     }
 
-    async handleGameStart(socket, gameId) {
-        const userId = socket.request.session.passport.user;
-
+    async handleGameMove(socket, data) {
         try {
-            const game = await db.oneOrNone(
-                "SELECT * FROM ttt_games WHERE id = $1 AND host_id = $2 AND status = 'waiting'",
-                [gameId, userId]
-            );
+            const userId = socket.request.session.passport.user;
+            const { gameId, row, col, piece } = data;
+
+            const game = await Game.getGameWithPlayers(gameId);
+            if (!game || game.status !== "in_progress") {
+                socket.emit("game:error", "Invalid game state");
+                return;
+            }
+
+            if (game.current_turn !== userId) {
+                socket.emit("game:error", "Not your turn");
+                return;
+            }
+
+            const gameState = this.gameStates.get(gameId.toString());
+            if (!gameState) {
+                socket.emit("game:error", "Game state not found");
+                return;
+            }
+
+            if (gameState.board[row][col] !== null) {
+                socket.emit("game:error", "Invalid move");
+                return;
+            }
+
+            gameState.board[row][col] = piece;
+            gameState.moveCount++;
+
+            const isWin = this.checkWin(gameState.board, { row, col }, piece);
+            const isDraw = !isWin && this.checkDraw(gameState.board);
+
+            if (isWin || isDraw) {
+                await db.none(
+                    `UPDATE ttt_games 
+                    SET status = $1, winner_id = $2
+                    WHERE id = $3`,
+                    [
+                        isWin ? "completed" : "draw",
+                        isWin ? userId : null,
+                        gameId,
+                    ]
+                );
+
+                this.io.to(`game:${gameId}`).emit("game:ended", {
+                    gameState,
+                    winner: isWin ? userId : null,
+                    isDraw,
+                });
+
+                this.gameStates.delete(gameId.toString());
+            } else {
+                const nextTurn =
+                    userId === game.host_id ? game.guest_id : game.host_id;
+
+                await db.none(
+                    `UPDATE ttt_games 
+                    SET current_turn = $1, last_move_time = CURRENT_TIMESTAMP
+                    WHERE id = $2`,
+                    [nextTurn, gameId]
+                );
+
+                gameState.currentTurn = nextTurn;
+                gameState.lastMoveTime = new Date().toISOString();
+                this.gameStates.set(gameId.toString(), gameState);
+
+                this.io.to(`game:${gameId}`).emit("game:move_made", {
+                    gameState,
+                    move: { row, col, piece, userId },
+                });
+
+                this.io.to(`game:${gameId}`).emit("game:turn_change", {
+                    currentTurn: nextTurn,
+                });
+
+                this.io.to(`game:${gameId}`).emit("game:turn_timer_start", {
+                    currentTurn: nextTurn,
+                    turnTimeLimit: game.turn_time_limit,
+                });
+            }
+        } catch (error) {
+            console.error("Error handling game move:", error);
+            socket.emit("game:error", "Failed to process move");
+        }
+    }
+
+    async handleGameStart(socket, gameId) {
+        try {
+            const game = await Game.getGameWithPlayers(gameId);
 
             if (!game) {
-                socket.emit(
-                    "lobby:error",
-                    "Unauthorized action or invalid game state"
-                );
+                socket.emit("game:error", "Game not found");
+                return;
+            }
+
+            if (
+                !socket.request.session.passport ||
+                socket.request.session.passport.user !== game.host_id
+            ) {
+                socket.emit("game:error", "Only the host can start the game");
                 return;
             }
 
             if (!game.guest_id) {
                 socket.emit(
-                    "lobby:error",
-                    "Cannot start game without second player"
+                    "game:error",
+                    "Cannot start game without a second player"
                 );
                 return;
             }
 
             await db.none(
-                "UPDATE ttt_games SET status = 'in_progress', current_turn = $1, last_move_time = CURRENT_TIMESTAMP WHERE id = $2",
+                `
+                UPDATE ttt_games 
+                SET status = 'in_progress',
+                    current_turn = $1,
+                    last_move_time = CURRENT_TIMESTAMP
+                WHERE id = $2
+            `,
                 [game.host_id, gameId]
             );
 
-            this.io.to(`game:${gameId}`).emit("game:started");
+            const gameState = {
+                board: Array(game.board_size)
+                    .fill(null)
+                    .map(() => Array(game.board_size).fill(null)),
+                currentTurn: game.host_id,
+                turnTimeLimit: game.turn_time_limit,
+                lastMoveTime: new Date().toISOString(),
+                moveCount: 0,
+                gameId: gameId,
+                boardSize: game.board_size,
+                allowCustomSettings: game.allow_custom_settings,
+            };
+
+            this.gameStates.set(gameId.toString(), gameState);
+
+            this.io.to(`game:${gameId}`).emit("game:started", {
+                gameState,
+                currentTurn: game.host_id,
+                hostUsername: game.host_username,
+                guestUsername: game.guest_username,
+                turnTimeLimit: game.turn_time_limit,
+                hostGamePiece: game.host_game_piece,
+                guestGamePiece: game.guest_game_piece,
+            });
+
+            this.io.to(`game:${gameId}`).emit("game:turn_timer_start", {
+                currentTurn: game.host_id,
+                turnTimeLimit: game.turn_time_limit,
+            });
+
+            console.log(`Game ${gameId} started successfully`);
         } catch (error) {
             console.error("Error starting game:", error);
-            socket.emit("lobby:error", "Failed to start game");
+            socket.emit("game:error", "Failed to start game");
         }
+    }
+
+    async handleTurnExpired(socket, gameId) {
+        try {
+            const game = await Game.getGameWithPlayers(gameId);
+            if (!game || game.status !== "in_progress") return;
+
+            const nextTurn =
+                game.current_turn === game.host_id
+                    ? game.guest_id
+                    : game.host_id;
+
+            await db.none(
+                `
+                UPDATE ttt_games 
+                SET current_turn = $1,
+                    last_move_time = CURRENT_TIMESTAMP
+                WHERE id = $2
+            `,
+                [nextTurn, gameId]
+            );
+
+            const gameState = this.gameStates.get(gameId.toString());
+            if (gameState) {
+                gameState.currentTurn = nextTurn;
+                gameState.lastMoveTime = new Date().toISOString();
+                this.gameStates.set(gameId.toString(), gameState);
+            }
+
+            this.io.to(`game:${gameId}`).emit("game:turn_change", {
+                currentTurn: nextTurn,
+                reason: "timer_expired",
+            });
+
+            this.io.to(`game:${gameId}`).emit("game:turn_timer_start", {
+                currentTurn: nextTurn,
+                turnTimeLimit: game.turn_time_limit,
+            });
+        } catch (error) {
+            console.error("Error handling turn expiration:", error);
+            socket.emit("game:error", "Failed to process turn expiration");
+        }
+    }
+
+    checkWin(board, lastMove, piece) {
+        const { row, col } = lastMove;
+        const size = board.length;
+
+        if (board[row].every((cell) => cell === piece)) return true;
+
+        if (board.every((row) => row[col] === piece)) return true;
+
+        if (row === col) {
+            if (board.every((row, i) => row[i] === piece)) return true;
+        }
+
+        if (row + col === size - 1) {
+            if (board.every((row, i) => row[size - 1 - i] === piece))
+                return true;
+        }
+
+        return false;
+    }
+
+    checkDraw(board) {
+        return board.every((row) => row.every((cell) => cell !== null));
     }
 
     async handleForceJoinRequest(socket, gameId) {

@@ -85,11 +85,21 @@ class LobbyManager {
             window.location.reload();
         });
 
-        this.socket.on("game:started", () => {
-            const startGameBtn = document.getElementById("startGameBtn");
-            if (startGameBtn) {
-                startGameBtn.remove();
-            }
+        this.socket.on("game:started", (data) => {
+            this.handleGameStart(data);
+        });
+
+        this.socket.on("game:turn_change", (data) => {
+            this.handleTurnChange(data);
+        });
+
+        this.socket.on("game:move_made", (data) => {
+            this.boardState = data.gameState.board;
+            this.updateBoardDisplay();
+        });
+
+        this.socket.on("game:turn_timer_start", (data) => {
+            this.startTurnTimer(data.turnTimeLimit);
         });
     }
 
@@ -120,8 +130,113 @@ class LobbyManager {
         });
     }
 
+    handleGameStart(data) {
+        const startGameBtn = document.getElementById("startGameBtn");
+        if (startGameBtn) {
+            startGameBtn.remove();
+        }
+
+        const statusBadge = document.querySelector(".game-status .badge");
+        if (statusBadge) {
+            statusBadge.textContent = "In Progress";
+            statusBadge.className = "badge bg-secondary";
+        }
+
+        this.boardState = data.gameState.board;
+        this.currentTurn = data.currentTurn;
+        this.hostPiece = data.hostGamePiece;
+        this.guestPiece = data.guestGamePiece;
+
+        this.addTurnIndicator(data.currentTurn);
+
+        this.addTimerDisplay();
+
+        const isMyTurn =
+            this.currentTurn ===
+            parseInt(document.getElementById("userId").innerHTML);
+        this.enableBoardInteraction(isMyTurn);
+
+        this.startTurnTimer(data.turnTimeLimit);
+    }
+
+    addTurnIndicator(currentTurn) {
+        const hostPlayer = document.querySelector(".host-player");
+        const guestPlayer = document.querySelector(".guest-player");
+
+        if (hostPlayer) {
+            this.updatePlayerTurnStatus(hostPlayer, currentTurn);
+        }
+
+        if (guestPlayer) {
+            this.updatePlayerTurnStatus(guestPlayer, currentTurn);
+        }
+    }
+
+    updatePlayerTurnStatus(playerElement, currentTurn) {
+        const isCurrentTurn =
+            parseInt(playerElement.dataset.userid) === currentTurn;
+        playerElement.classList.toggle("active-turn", isCurrentTurn);
+    }
+
+    addTimerDisplay() {
+        const timerContainer = document.createElement("div");
+        timerContainer.className = "turn-timer mt-3 text-center";
+        timerContainer.innerHTML = '<span class="time-remaining"></span>';
+        document.querySelector(".game-info").appendChild(timerContainer);
+    }
+
+    startTurnTimer(timeLimit) {
+        if (this.turnTimer) {
+            clearInterval(this.turnTimer);
+        }
+
+        const timerDisplay = document.querySelector(".time-remaining");
+        if (!timerDisplay) return;
+
+        let timeLeft = timeLimit;
+        timerDisplay.textContent = `Time left: ${timeLeft}s`;
+
+        this.turnTimer = setInterval(() => {
+            timeLeft--;
+            timerDisplay.textContent = `Time left: ${timeLeft}s`;
+
+            if (timeLeft <= 0) {
+                clearInterval(this.turnTimer);
+                this.socket.emit("game:turn_expired", this.gameId);
+            }
+        }, 1000);
+    }
+
+    handleTurnChange(data) {
+        this.currentTurn = data.currentTurn;
+
+        const hostPlayer = document.querySelector(".host-player");
+        const guestPlayer = document.querySelector(".guest-player");
+
+        this.updatePlayerTurnStatus(hostPlayer, data.currentTurn);
+        this.updatePlayerTurnStatus(guestPlayer, data.currentTurn);
+
+        const isMyTurn =
+            data.currentTurn ===
+            parseInt(document.getElementById("userId").innerHTML);
+        this.enableBoardInteraction(isMyTurn);
+
+        this.startTurnTimer(data.turnTimeLimit);
+    }
+
     handleCellClick(row, col) {
-        console.log(`Cell clicked: ${row}, ${col}`);
+        if (!this.isMyTurn() || this.boardState[row][col] !== null) {
+            return;
+        }
+
+        const currentPiece = this.isHost ? this.hostPiece : this.guestPiece;
+
+        this.socket.emit("game:make_move", {
+            gameId: this.gameId,
+            row: row,
+            col: col,
+            piece: currentPiece,
+        });
     }
 
     updateBoardDisplay() {
@@ -134,13 +249,24 @@ class LobbyManager {
                     `.board-cell[data-row="${rowIndex}"][data-col="${colIndex}"]`
                 );
                 if (cellElement) {
-                    cellElement.innerHTML = "";
-
-                    if (cell) {
-                        cellElement.innerHTML = GAME_PIECES[cell].svg;
-                    }
+                    cellElement.innerHTML = cell ? this.getPieceSVG(cell) : "";
                 }
             });
+        });
+    }
+
+    isMyTurn() {
+        return (
+            this.currentTurn ===
+            parseInt(document.getElementById("userId").innerHTML)
+        );
+    }
+
+    enableBoardInteraction(enabled) {
+        const cells = document.querySelectorAll(".board-cell");
+        cells.forEach((cell) => {
+            cell.style.cursor = enabled ? "pointer" : "not-allowed";
+            cell.classList.toggle("disabled", !enabled);
         });
     }
 
@@ -230,10 +356,21 @@ class LobbyManager {
         if (this.elements.gameStatus) {
             const statusBadge =
                 this.elements.gameStatus.querySelector(".badge");
-            if (game.guest_id) {
+            if (game.status === "ready") {
                 statusBadge.textContent = "Ready to Start";
                 statusBadge.classList.remove("bg-warning");
+                statusBadge.classList.remove("bg-secondary");
                 statusBadge.classList.add("bg-success");
+            } else if (game.status === "in_progress") {
+                statusBadge.textContent = "In Progress";
+                statusBadge.classList.remove("bg-warning");
+                statusBadge.classList.remove("bg-success");
+                statusBadge.classList.add("bg-secondary");
+            } else {
+                statusBadge.textContent = "Waiting for Players";
+                statusBadge.classList.remove("bg-success");
+                statusBadge.classList.remove("bg-secondary");
+                statusBadge.classList.add("bg-warning");
             }
         }
 
@@ -351,27 +488,94 @@ class LobbyManager {
         this.elements.guestPlayer.classList.remove("bg-light");
     }
 
-    updateLobbyState(state) {
-        const { game } = state;
-
-        if (this.elements.gameStatus) {
-            const statusBadge =
-                this.elements.gameStatus.querySelector(".badge");
-            if (game.guest_id) {
-                statusBadge.textContent = "Ready to Start";
-                statusBadge.classList.remove("bg-warning");
-                statusBadge.classList.add("bg-success");
-            }
-        }
-
-        if (game.guest_id && this.elements.guestPlayer) {
-            this.updateGuestPlayer({
-                id: game.guest_id,
-                username: game.guest_username,
-                avatarUrl: game.guest_avatar_url,
-                rating: game.guest_rating,
-            });
-        }
+    getPieceSVG(piece) {
+        const pieces = {
+            X: `
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            `,
+            O: `
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <circle cx="12" cy="12" r="10"></circle>
+                </svg>
+            `,
+            club: `<svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-club"
+                >
+                    <path
+                        d="M17.28 9.05a5.5 5.5 0 1 0-10.56 0A5.5 5.5 0 1 0 12 17.66a5.5 5.5 0 1 0 5.28-8.6Z"
+                    />
+                    <path d="M12 17.66L12 22" />
+                </svg>`,
+            spade: `
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-spade"
+                >
+                    <path
+                        d="M5 9c-1.5 1.5-3 3.2-3 5.5A5.5 5.5 0 0 0 7.5 20c1.8 0 3-.5 4.5-2 1.5 1.5 2.7 2 4.5 2a5.5 5.5 0 0 0 5.5-5.5c0-2.3-1.5-4-3-5.5l-7-7-7 7Z"
+                    />
+                    <path d="M12 18v4" />
+                </svg>`,
+            heart: `
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-heart"
+                >
+                    <path
+                        d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+                    />
+                </svg>
+                `,
+        };
+        return pieces[piece] || "";
     }
 }
 
@@ -379,4 +583,5 @@ document.addEventListener("DOMContentLoaded", () => {
     window.lobbyManager = new LobbyManager();
     window.lobbyManager.initializeGameBoard();
     window.lobbyManager.handleBoardColors();
+    window.lobbyManager.updateLobbyState();
 });

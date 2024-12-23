@@ -26,6 +26,10 @@
     transition: background-color 0.2s;
 }
 
+.player-card.active-turn {
+    border: 3px solid #198754 !important;
+}
+
 .board-cell:hover {
     background-color: lightblue !important;
 }
@@ -81,4 +85,48 @@
 .game-board.spectator-mode .board-cell:hover {
     background-color: inherit !important;
     opacity: 0.9;
+}
+
+.game-info {
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.turn-indicator {
+    font-size: 1.1em;
+}
+
+.turn-timer {
+    font-size: 1em;
+    padding: 0.5em 1em;
+}
+
+.active-turn {
+    position: relative;
+    background-color: #e9ecef !important;
+    border: 2px solid #198754 !important;
+    transition: all 0.3s ease;
+}
+
+.active-turn::after {
+    content: "►";
+    position: absolute;
+    right: -1.5em;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #198754;
+}
+
+.board-cell {
+    transition: background-color 0.3s ease;
+}
+
+.board-cell:not(.disabled):hover {
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.board-cell.disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
 }
