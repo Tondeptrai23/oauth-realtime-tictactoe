@@ -80,7 +80,7 @@ class GameController {
 
             const game = await Game.getGameWithPlayers(gameId);
 
-            if (!game) {
+            if (!game || game.status === "completed") {
                 return res.redirect("/");
             }
 
@@ -122,6 +122,44 @@ class GameController {
             console.error("Error getting current game:", error);
             res.status(500).render("error", {
                 message: "Failed to get current game",
+            });
+        }
+    }
+
+    static async showGameReplay(req, res) {
+        try {
+            const gameId = req.params.id;
+
+            if (isNaN(parseInt(gameId))) {
+                return res.redirect("/");
+            }
+
+            const game = await Game.getGameReplay(gameId);
+
+            if (!game) {
+                return res.redirect("/");
+            }
+
+            const processedMoves = game.moves.map((move) => ({
+                ...move,
+                player_type:
+                    move.user_id === game.game.host_id ? "host" : "guest",
+            }));
+
+            res.render("replay", {
+                game: {
+                    game: game.game,
+                    moves: processedMoves,
+                },
+                movesJson: JSON.stringify(processedMoves),
+                user: req.user,
+                layout: "main",
+                GAME_PIECES: GAME_PIECES,
+            });
+        } catch (error) {
+            console.error("Error loading game replay:", error);
+            res.status(500).render("error", {
+                message: "Error loading game replay",
             });
         }
     }

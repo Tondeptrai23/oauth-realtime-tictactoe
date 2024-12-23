@@ -77,4 +77,10 @@ $(document).ready(function () {
             },
         });
     });
+
+    $(".replay-btn").click(function () {
+        const gameId = $(this).data("game-id");
+
+        window.location.href = `${window.location.origin}/game/${gameId}/replay`;
+    });
 });

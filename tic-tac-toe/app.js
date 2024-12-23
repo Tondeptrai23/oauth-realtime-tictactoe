@@ -78,44 +78,7 @@ app.engine(
         defaultLayout: "main",
         layoutsDir: path.join(__dirname, "views/layouts"),
         partialsDir: path.join(__dirname, "views/partials"),
-        helpers: {
-            range: function (start, end) {
-                const result = [];
-                for (let i = start; i < end; i++) {
-                    result.push(i);
-                }
-                return result;
-            },
-
-            eq: function (a, b) {
-                return a === b;
-            },
-
-            and: function () {
-                return Array.prototype.every.call(arguments, Boolean);
-            },
-
-            lookup: function (obj, field) {
-                return obj && obj[field];
-            },
-
-            choose_color: function (row, col, hostColor, guestColor) {
-                const sum = Number(row) + Number(col);
-                return sum % 2 === 0 ? hostColor : guestColor;
-            },
-
-            formatDate: function (date) {
-                return date.toLocaleString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "numeric",
-                    second: "numeric",
-                    hour12: true,
-                });
-            },
-        },
+        helpers: require("./config/handlebars"),
     })
 );
 app.set("view engine", "hbs");

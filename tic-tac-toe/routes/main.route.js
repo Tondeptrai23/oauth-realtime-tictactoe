@@ -35,4 +35,9 @@ router.get("/lobby", GameController.showCurrentGame.bind(GameController));
 
 router.get("/game/:id", GameController.getGameLobby.bind(GameController));
 
+router.get(
+    "/game/:id/replay",
+    GameController.showGameReplay.bind(GameController)
+);
+
 module.exports = router;

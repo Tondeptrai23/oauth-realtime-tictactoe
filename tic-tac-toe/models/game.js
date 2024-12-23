@@ -277,6 +277,34 @@ class GameModel {
             [userId]
         );
     }
+
+    static async getGameReplay(gameId) {
+        const game = await db.one(
+            `
+            SELECT g.*, 
+                   host.username AS host_username, 
+                   guest.username AS guest_username,
+                   host.avatar_url AS host_avatar,
+                   guest.avatar_url AS guest_avatar
+            FROM ${db.tables.games} g
+            JOIN ${db.tables.users} host ON g.host_id = host.id
+            JOIN ${db.tables.users} guest ON g.guest_id = guest.id
+            WHERE g.id = $1 and g.status = 'completed'
+        `,
+            [gameId]
+        );
+
+        const moves = await db.any(
+            `
+            SELECT * FROM ${db.tables.moves} 
+            WHERE game_id = $1 
+            ORDER BY move_number
+        `,
+            [gameId]
+        );
+
+        return { game, moves };
+    }
 }
 
 module.exports = GameModel;

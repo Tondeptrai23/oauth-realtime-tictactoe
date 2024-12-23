@@ -1,0 +1,97 @@
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Game Replay #{{game.game.id}}</h4>
+                    <div>
+                        <a href="/" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-house"></i> Back to Home
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="game-info mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="player-info">
+                                <img src="{{#if (eq game.game.host_avatar 'auth')}}/api/profile/avatar/{{game.game.host_id}}{{else}}{{game.game.host_avatar}}{{/if}}"
+                                    alt="Host Avatar" class="avatar rounded-circle" style="width: 32px; height: 32px;">
+                                <span class="ms-2 fw-bold">{{game.game.host_username}}</span>
+                                <span class="badge bg-primary ms-2">Host</span>
+                            </div>
+                            <div class="vs">VS</div>
+                            <div class="player-info text-end">
+                                <span class="badge bg-secondary me-2">Guest</span>
+                                <span class="me-2 fw-bold">{{game.game.guest_username}}</span>
+                                <img src="{{#if (eq game.game.guest_avatar 'auth')}}/api/profile/avatar/{{game.game.guest_id}}{{else}}{{game.game.guest_avatar}}{{/if}}"
+                                    alt="Guest Avatar" class="avatar rounded-circle" style="width: 32px; height: 32px;">
+                            </div>
+                        </div>
+                        <div class="text-center text-muted">
+                            <small>Board Size: {{game.game.board_size}}x{{game.game.board_size}} | Played on: {{formatDate game.game.created_at}}</small>
+                        </div>
+                    </div>
+
+                    <div class="game-board-container" 
+                        data-board-size="{{game.game.board_size}}"
+                        data-moves='{{movesJson}}'
+                        data-host-id="{{game.game.host_id}}"
+                        data-guest-id="{{game.game.guest_id}}">
+                        <div class="game-board d-grid gap-1 mb-4" style="grid-template-columns: repeat({{game.game.board_size}}, 1fr);">
+                            {{#times game.game.board_size}}
+                                {{#times ../game.game.board_size}}
+                                    <div class="board-cell" data-row="{{decrementBy @../index 1}}" data-col="{{decrementBy @index 1}}"></div>
+                                {{/times}}
+                            {{/times}}
+                        </div>
+                    </div>
+
+                    <div class="replay-controls">
+                        <div class="d-flex justify-content-center align-items-center gap-3 mb-3">
+                            <button class="btn btn-outline-secondary" id="stepBackBtn" disabled>
+                                <i class="bi bi-skip-backward"></i>
+                            </button>
+                            <button class="btn btn-outline-primary" id="playPauseBtn">
+                                <i class="bi bi-play"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary" id="stepForwardBtn">
+                                <i class="bi bi-skip-forward"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" id="resetBtn">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </div>
+                        <div class="d-flex justify-content-center align-items-center gap-3">
+                            <label class="form-label mb-0">Speed:</label>
+                            <select class="form-select form-select-sm w-auto" id="speedSelect">
+                                <option value="2000">Slow</option>
+                                <option value="1000" selected>Normal</option>
+                                <option value="500">Fast</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Move History</h5>
+                </div>
+                <div class="card-body">
+                    <div class="moves-list" style="max-height: 400px; overflow-y: auto;">
+                        {{#each game.moves}}
+                            <div class="move-item" data-move-number="{{move_number}}">
+                                <span class="move-number">#{{move_number}}</span>
+                                <span class="move-player">{{lookup ../game.game (concat (lookup . 'player_type') '_username')}}</span>
+                                <span class="move-position">Row {{increment position_x}}, Col {{increment position_y}}</span>
+                            </div>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/js/replay.js"></script>
+</div>
