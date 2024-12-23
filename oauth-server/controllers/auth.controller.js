@@ -1,16 +1,13 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const db = require("../config/database");
+const UserModel = require("../models/user.model");
 
 class AuthController {
     async register(req, res) {
         try {
             const { username, password, fullname } = req.body;
 
-            const existingUser = await db.oneOrNone(
-                "SELECT id FROM users WHERE username = $1",
-                [username]
-            );
+            const existingUser = await UserModel.getUserByUsername(username);
             if (existingUser) {
                 return res.status(400).json({ error: "User already exists" });
             }
@@ -18,9 +15,10 @@ class AuthController {
             const salt = await bcrypt.genSalt(10);
             const passwordHash = await bcrypt.hash(password, salt);
 
-            const newUser = await db.one(
-                "INSERT INTO users (username, password_hash, fullname) VALUES ($1, $2, $3) RETURNING id, username, fullname",
-                [username, passwordHash, fullname]
+            const newUser = await UserModel.createUser(
+                username,
+                passwordHash,
+                fullname
             );
 
             const token = jwt.sign(
@@ -43,11 +41,7 @@ class AuthController {
         try {
             const { username, password } = req.body;
 
-            const user = await db.oneOrNone(
-                "SELECT id, username, password_hash FROM users WHERE username = $1",
-                [username]
-            );
-
+            const user = await UserModel.getUserByUsername(username);
             if (!user) {
                 return res.status(401).json({ error: "Invalid credentials" });
             }

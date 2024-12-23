@@ -1,8 +1,8 @@
 const crypto = require("crypto");
-const db = require("../config/database");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const fetch = require("node-fetch");
+const OAuthModel = require("../models/oauth.model");
+const UserModel = require("../models/user.model");
 
 class OAuthController {
     generateClientCredentials() {
@@ -24,12 +24,13 @@ class OAuthController {
 
             const { clientId, clientSecret } = this.generateClientCredentials();
 
-            const newClient = await db.one(
-                `INSERT INTO oauth_clients 
-                (client_id, client_secret, name, user_id, website_url, redirect_uri)
-                VALUES ($1, $2, $3, $4, $5, $6)
-                RETURNING id, client_id, client_secret, name, website_url, redirect_uri`,
-                [clientId, clientSecret, name, userId, websiteUrl, redirectUri]
+            const newClient = await OAuthModel.createClient(
+                clientId,
+                clientSecret,
+                name,
+                userId,
+                websiteUrl,
+                redirectUri
             );
 
             res.status(201).json({
@@ -47,15 +48,7 @@ class OAuthController {
 
     async getClientsByUser(req, res) {
         try {
-            const userId = req.user.id;
-
-            const clients = await db.any(
-                `SELECT id, client_id, name, website_url, redirect_uri, client_secret
-                FROM oauth_clients 
-                WHERE user_id = $1`,
-                [userId]
-            );
-
+            const clients = await OAuthModel.getClientsByUserId(req.user.id);
             res.json({ clients });
         } catch (error) {
             console.error("Error fetching OAuth clients:", error);
@@ -65,14 +58,9 @@ class OAuthController {
 
     async getClientById(req, res) {
         try {
-            const { clientId } = req.params;
-            const userId = req.user.id;
-
-            const client = await db.oneOrNone(
-                `SELECT id, client_id, name, website_url, redirect_uri, client_secret
-                FROM oauth_clients 
-                WHERE client_id = $1 AND user_id = $2`,
-                [clientId, userId]
+            const client = await OAuthModel.getClientByClientId(
+                req.params.clientId,
+                req.user.id
             );
 
             if (!client) {
@@ -94,23 +82,12 @@ class OAuthController {
             const userId = req.user.id;
             const { name, websiteUrl, redirectUri } = req.body;
 
-            const existingClient = await db.oneOrNone(
-                "SELECT id FROM oauth_clients WHERE client_id = $1 AND user_id = $2",
-                [clientId, userId]
-            );
-
-            if (!existingClient) {
-                return res
-                    .status(404)
-                    .json({ error: "OAuth client not found" });
-            }
-
-            const updatedClient = await db.one(
-                `UPDATE oauth_clients 
-                SET name = $1, website_url = $2, redirect_uri = $3
-                WHERE client_id = $4
-                RETURNING id, client_id, name, website_url, redirect_uri`,
-                [name, websiteUrl, redirectUri, clientId]
+            const updatedClient = await OAuthModel.updateClient(
+                clientId,
+                userId,
+                name,
+                websiteUrl,
+                redirectUri
             );
 
             res.json({ client: updatedClient });
@@ -132,9 +109,9 @@ class OAuthController {
                 });
             }
 
-            const client = await db.oneOrNone(
-                "SELECT name, website_url FROM oauth_clients WHERE client_id = $1 AND redirect_uri = $2",
-                [client_id, redirect_uri]
+            const client = await OAuthModel.getClientForAuth(
+                client_id,
+                redirect_uri
             );
 
             if (!client) {
@@ -163,11 +140,7 @@ class OAuthController {
     }
 
     async authenticateUser(username, password) {
-        const user = await db.oneOrNone(
-            "SELECT id, password_hash FROM users WHERE username = $1",
-            [username]
-        );
-
+        const user = await UserModel.getUserByUsername(username);
         if (!user) return null;
 
         const validPassword = await bcrypt.compare(
@@ -183,9 +156,9 @@ class OAuthController {
         try {
             const { client_id, redirect_uri, scope, state } = req.query;
 
-            const client = await db.oneOrNone(
-                "SELECT name, website_url FROM oauth_clients WHERE client_id = $1 AND redirect_uri = $2",
-                [client_id, redirect_uri]
+            const client = await OAuthModel.getClientForAuth(
+                client_id,
+                redirect_uri
             );
 
             if (!client) {
@@ -195,11 +168,7 @@ class OAuthController {
                 });
             }
 
-            const user = await db.one(
-                "SELECT username FROM users WHERE id = $1",
-                [req.session.userId]
-            );
-
+            const user = await UserModel.getUserById(req.session.userId);
             const requestedScopes = scope ? scope.split(" ") : ["profile:full"];
 
             res.render("authorize", {
@@ -236,19 +205,12 @@ class OAuthController {
             const code = crypto.randomBytes(32).toString("hex");
             const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-            const userId = req.session.userId;
-
-            await db.none(
-                `INSERT INTO authorization_codes 
-                (code, client_id, user_id, expires_at, scope) 
-                VALUES ($1, $2, $3, $4, $5)`,
-                [
-                    code,
-                    client_id,
-                    userId,
-                    expiresAt,
-                    scope ? scope.split(",") : ["profile:full"],
-                ]
+            await OAuthModel.createAuthorizationCode(
+                code,
+                client_id,
+                req.session.userId,
+                expiresAt,
+                scope ? scope.split(",") : ["profile:full"]
             );
 
             const redirectUrl = new URL(redirect_uri);
@@ -271,9 +233,9 @@ class OAuthController {
         try {
             const { grant_type, code, client_id, client_secret } = req.body;
 
-            const client = await db.oneOrNone(
-                "SELECT id FROM oauth_clients WHERE client_id = $1 AND client_secret = $2",
-                [client_id, client_secret]
+            const client = await OAuthModel.validateClientCredentials(
+                client_id,
+                client_secret
             );
 
             if (!client) {
@@ -288,10 +250,9 @@ class OAuthController {
                     .json({ error: "Unsupported grant type" });
             }
 
-            const authCode = await db.oneOrNone(
-                `SELECT user_id, scope FROM authorization_codes 
-                WHERE code = $1 AND client_id = $2 AND expires_at > NOW()`,
-                [code, client_id]
+            const authCode = await OAuthModel.getValidAuthorizationCode(
+                code,
+                client_id
             );
 
             if (!authCode) {
@@ -312,9 +273,7 @@ class OAuthController {
                 { expiresIn: "1h" }
             );
 
-            await db.none("DELETE FROM authorization_codes WHERE code = $1", [
-                code,
-            ]);
+            await OAuthModel.deleteAuthorizationCode(code);
 
             res.json({
                 access_token: accessToken,

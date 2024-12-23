@@ -1,6 +1,6 @@
 const path = require("path");
-const db = require("../config/database");
 const fs = require("fs");
+const ProfileModel = require("../models/profile.model");
 
 class ProfileController {
     async getProfile(req, res) {
@@ -13,10 +13,7 @@ class ProfileController {
                 return res.status(403).json({ error: "Insufficient scope" });
             }
 
-            const user = await db.one(
-                "SELECT id, username, fullname, nickname FROM users WHERE id = $1",
-                [req.user.user_id]
-            );
+            const user = await ProfileModel.getProfile(req.user.user_id);
             res.json(user);
         } catch (error) {
             console.error("Get profile error:", error);
@@ -28,10 +25,7 @@ class ProfileController {
 
     async getProfilePicture(req, res) {
         try {
-            const user = await db.one(
-                "SELECT avatar FROM users WHERE id = $1",
-                [req.user.user_id]
-            );
+            const user = await ProfileModel.getAvatar(req.user.user_id);
 
             if (!user.avatar) {
                 user.avatar = fs.readFileSync(
@@ -52,9 +46,10 @@ class ProfileController {
     async updateProfile(req, res) {
         try {
             const { fullname, nickname } = req.body;
-            const user = await db.one(
-                "UPDATE users SET fullname = $1, nickname = $2 WHERE id = $3 RETURNING id, username, fullname, nickname",
-                [fullname, nickname, req.user.id]
+            const user = await ProfileModel.updateProfile(
+                req.user.id,
+                fullname,
+                nickname
             );
             res.json(user);
         } catch (error) {
@@ -71,11 +66,7 @@ class ProfileController {
                 return res.status(400).json({ error: "No file uploaded" });
             }
 
-            await db.none("UPDATE users SET avatar = $1 WHERE id = $2", [
-                req.file.buffer,
-                req.user.id,
-            ]);
-
+            await ProfileModel.updateAvatar(req.user.id, req.file.buffer);
             res.json({ message: "Avatar updated successfully" });
         } catch (error) {
             console.error("Update avatar error:", error);
@@ -87,13 +78,10 @@ class ProfileController {
 
     async getAvatar(req, res) {
         try {
-            const result = await db.oneOrNone(
-                "SELECT avatar FROM users WHERE id = $1",
-                [req.params.userId]
-            );
+            const result = await ProfileModel.getAvatar(req.params.userId);
 
             if (!result || !result.avatar) {
-                return res.status(404);
+                return res.status(404).send();
             }
 
             res.set("Content-Type", "image/jpeg");
