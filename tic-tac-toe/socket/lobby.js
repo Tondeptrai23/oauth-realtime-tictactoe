@@ -369,10 +369,58 @@ class GameLobbyManager {
         }
     }
 
+    async getGameMovesAndState(gameId) {
+        try {
+            const moves = await db.manyOrNone(
+                `
+                SELECT m.*, 
+                       u.game_piece as piece
+                FROM ttt_moves m
+                JOIN ttt_users u ON m.user_id = u.id
+                WHERE m.game_id = $1 
+                ORDER BY m.move_number ASC
+            `,
+                [gameId]
+            );
+
+            const game = await Game.getGameWithPlayers(gameId);
+            if (!game) return null;
+
+            const gameState = {
+                board: Array(game.board_size)
+                    .fill(null)
+                    .map(() => Array(game.board_size).fill(null)),
+                currentTurn: game.current_turn,
+                turnTimeLimit: game.turn_time_limit,
+                lastMoveTime: game.last_move_time,
+                moveCount: moves.length,
+                gameId: gameId,
+                boardSize: game.board_size,
+                allowCustomSettings: game.allow_custom_settings,
+            };
+
+            moves.forEach((move) => {
+                gameState.board[move.position_y][move.position_x] = move.piece;
+            });
+
+            this.gameStates.set(gameId.toString(), gameState);
+
+            return {
+                gameState,
+                moves,
+                game,
+            };
+        } catch (error) {
+            console.error("Error getting game moves:", error);
+            return null;
+        }
+    }
+
     async handleLobbyJoin(socket, gameId) {
         try {
             const game = await db.one(
-                `SELECT g.*, 
+                `
+                SELECT g.*, 
                     host.username as host_username, 
                     host.avatar_url as host_avatar_url,
                     guest.username as guest_username,
@@ -380,7 +428,8 @@ class GameLobbyManager {
                 FROM ttt_games g
                 JOIN ttt_users host ON g.host_id = host.id
                 LEFT JOIN ttt_users guest ON g.guest_id = guest.id
-                WHERE g.id = $1`,
+                WHERE g.id = $1
+            `,
                 [gameId]
             );
 
@@ -391,6 +440,21 @@ class GameLobbyManager {
                 this.gameRooms.set(gameId, new Set());
             }
             this.gameRooms.get(gameId).add(socket.id);
+
+            if (game.status === "in_progress") {
+                const gameData = await this.getGameMovesAndState(gameId);
+                if (gameData) {
+                    socket.emit("game:state_sync", {
+                        gameState: gameData.gameState,
+                        currentTurn: gameData.game.current_turn,
+                        hostUsername: gameData.game.host_username,
+                        guestUsername: gameData.game.guest_username,
+                        turnTimeLimit: gameData.game.turn_time_limit,
+                        hostGamePiece: gameData.game.host_game_piece,
+                        guestGamePiece: gameData.game.guest_game_piece,
+                    });
+                }
+            }
 
             this.broadcastLobbyState(gameId);
         } catch (error) {

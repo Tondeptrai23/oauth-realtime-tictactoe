@@ -118,6 +118,32 @@ class LobbyManager {
         this.socket.on("game:ended", (data) => {
             this.handleGameEnd(data);
         });
+
+        this.socket.on("game:state_sync", (data) => {
+            this.handleGameStateSync(data);
+        });
+    }
+
+    handleGameStateSync(data) {
+        this.boardState = data.gameState.board;
+        this.currentTurn = data.currentTurn;
+        this.hostPiece = data.hostGamePiece;
+        this.guestPiece = data.guestGamePiece;
+
+        this.updateBoardDisplay();
+
+        this.addTurnIndicator(data.currentTurn);
+
+        if (!document.querySelector(".turn-timer")) {
+            this.addTimerDisplay();
+        }
+
+        const isMyTurn =
+            this.currentTurn ===
+            parseInt(document.getElementById("userId").innerHTML);
+        this.enableBoardInteraction(isMyTurn);
+
+        this.startTurnTimer(data.turnTimeLimit);
     }
 
     initializeGameBoard() {
