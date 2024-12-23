@@ -98,13 +98,11 @@ class GameLobbyManager {
                 return;
             }
 
-            // Update game status to in_progress
             await db.none(
                 "UPDATE ttt_games SET status = 'in_progress', current_turn = $1, last_move_time = CURRENT_TIMESTAMP WHERE id = $2",
                 [game.host_id, gameId]
             );
 
-            // Notify all players in the room that the game has started
             this.io.to(`game:${gameId}`).emit("game:started");
         } catch (error) {
             console.error("Error starting game:", error);
@@ -280,6 +278,13 @@ class GameLobbyManager {
                 }
             }
             this.broadcastLobbyState(socket.gameId);
+
+            const wasSpectator = socket.rooms?.has(
+                `spectators:${socket.gameId}`
+            );
+            if (wasSpectator) {
+                this.handleSpectatorLeave(socket, socket.gameId);
+            }
         }
     }
 

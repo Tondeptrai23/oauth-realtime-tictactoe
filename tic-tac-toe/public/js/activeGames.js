@@ -137,17 +137,20 @@ class GamesManager {
                 break;
         }
 
-        card.querySelector(
-            ".spectator-count"
-        ).textContent = `${game.spectator_count} watching`;
-
         const joinButton = card.querySelector(".join-game-btn");
         if (game.status === "waiting") {
             joinButton.textContent = "Join Game";
             joinButton.classList.add("btn-primary");
+            joinButton.addEventListener("click", () => {
+                this.showWaitingDialog();
+                this.socket.emit("lobby:join_request", game.id);
+            });
         } else {
             joinButton.textContent = "Spectate";
             joinButton.classList.add("btn-secondary");
+            joinButton.addEventListener("click", () => {
+                window.location.href = `/game/${game.id}?mode=spectate`;
+            });
         }
 
         joinButton.addEventListener("click", () => {

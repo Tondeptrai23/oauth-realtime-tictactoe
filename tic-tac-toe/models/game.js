@@ -6,7 +6,7 @@ class GameModel {
             `SELECT id, host_id, board_size, status, allow_custom_settings
              FROM ttt_games 
              WHERE host_id = $1 
-             AND status IN ('waiting', 'in_progress')`,
+             AND status IN ('waiting', 'in_progress', 'ready')`,
             [hostId]
         );
     }

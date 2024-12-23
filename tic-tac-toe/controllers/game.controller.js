@@ -84,10 +84,20 @@ class GameController {
                 return res.redirect("/");
             }
 
+            const isHost = game.host_id === req.user.id;
+            const isGuest = game.guest_id === req.user.id;
+            var isSpectator = false;
+
+            if (game.status !== "waiting" && !isHost && !isGuest) {
+                isSpectator = true;
+            }
+
             res.render("lobby", {
                 game,
                 user: req.user,
-                isHost: game.host_id === req.user.id,
+                isHost,
+                isGuest,
+                isSpectator,
                 layout: "main",
                 GAME_PIECES: GAME_PIECES,
             });

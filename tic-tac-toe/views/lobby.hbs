@@ -56,29 +56,14 @@
                         </div>
                     </div>
                 </div>
-
-                <div>
-                    <div
-                        class="d-flex justify-content-between align-items-center mb-2"
-                    >
-                        <h6 class="mb-0">
-                            Spectators
-                        </h6>
-                        <span class="badge bg-secondary spectator-count">
-                            0
-                        </span>
-                    </div>
-                    <div
-                        class="spectators-list"
-                        style="max-height: 200px; overflow-y: auto;"
-                    >
-                    </div>
-                </div>
             </div>
         </div>
 
         <div class="col-md-7 p-4">
-            <div class="game-header mb-4" data-is-host="{{isHost}}">
+            <div class="game-header mb-4" 
+                data-is-host="{{isHost}}"
+                data-is-spectator="{{isSpectator}}"
+            > 
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
                         <h4 class="mb-0 me-3">Game Room #{{game.id}}</h4>
@@ -108,7 +93,7 @@
                 style="min-height: 400px;"
             >
                 {{#if game.guest_id}}
-                    {{> game-board game=game isHost=isHost GAME_PIECES=../GAME_PIECES}}
+                    {{> game-board game=game isHost=isHost isSpectator=isSpectator GAME_PIECES=../GAME_PIECES}}
                 {{else}}
                     <div class="text-center text-muted">
                         <i class="bi bi-hourglass" style="font-size: 48px;"></i>

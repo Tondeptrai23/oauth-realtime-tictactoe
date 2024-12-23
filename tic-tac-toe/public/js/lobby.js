@@ -4,7 +4,12 @@ class LobbyManager {
         this.gameId = window.location.pathname.split("/").pop();
         this.isHost =
             document.querySelector(".game-header")?.dataset.isHost === "true";
+        this.isSpectator =
+            document.querySelector(".game-header")?.dataset.isSpectator ===
+            "true";
 
+        this.spectatorsList = document.querySelector(".spectators-list");
+        this.spectatorCount = document.querySelector(".spectator-count");
         this.elements = {
             guestPlayer: document.querySelector(".guest-player"),
             gameStatus: document.querySelector(".game-status"),
@@ -26,10 +31,19 @@ class LobbyManager {
 
         const leaveButton = document.getElementById("leaveGameBtn");
         if (leaveButton) {
-            leaveButton.addEventListener("click", (e) => {
-                e.preventDefault();
-                this.showLeaveConfirmation();
-            });
+            if (this.isSpectator) {
+                leaveButton.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    this.socket.emit("lobby:spectator_leave", this.gameId);
+
+                    window.location.href = "/";
+                });
+            } else {
+                leaveButton.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    this.showLeaveConfirmation();
+                });
+            }
         }
 
         if (!this.isHost) {
@@ -49,18 +63,9 @@ class LobbyManager {
             window.onload = () => this.handleBoardColors();
         });
 
-        this.socket.on("lobby:join_rejected", () => {
-            this.handleLeaveLobby();
-        });
-
         this.socket.on("lobby:error", (error) => {
             if (error === "existing_game") {
                 this.elements.existingGameModal.show();
-            } else if (
-                error.includes("already has two players") ||
-                error.includes("no longer accepting")
-            ) {
-                this.handleLeaveLobby();
             }
         });
 
