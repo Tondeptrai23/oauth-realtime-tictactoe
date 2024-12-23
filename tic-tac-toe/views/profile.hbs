@@ -103,6 +103,9 @@
                                         Board Size
                                     </th>
                                     <th>
+                                        Rating Change
+                                    </th>
+                                    <th>
                                         Action
                                     </th>
                                 </tr>
@@ -115,13 +118,13 @@
                                         </td>
                                         <td>
                                             {{#if (eq ../user.id this.host_id)}}
-                                                {{this.guest_name}}
+                                                {{this.guest_username}}
                                             {{else}}
-                                                {{this.host_name}}
+                                                {{this.host_username}}
                                             {{/if}}
                                         </td>
                                         <td>
-                                            {{#if this.winner_name}}
+                                            {{#if this.winner_username}}
                                                 {{#if (eq ../user.id this.winner_id)}}
                                                     Won
                                                 {{else}}
@@ -133,6 +136,12 @@
                                         </td>
                                         <td>
                                             {{this.board_size}}x{{this.board_size}}
+                                        </td>
+                                        <td class="rating-cell" 
+                                            data-winner-id="{{this.winner_id}}" 
+                                            data-host-id="{{this.host_id}}"
+                                            data-guest-id="{{this.guest_id}}">
+                                            Loading...
                                         </td>
                                         <td>
                                             <button
@@ -152,4 +161,39 @@
         </div>
     </div>
     <script src="/js/profile.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ratingCells = document.querySelectorAll('.rating-cell');
+        const initialRating = {{ user.rating }};
+        let currentRating = initialRating;
+
+        ratingCells.forEach((cell, index) => {
+            const winnerId = cell.getAttribute('data-winner-id');
+            const hostId = cell.getAttribute('data-host-id');
+            const guestId = cell.getAttribute('data-guest-id');
+            const userId = {{ user.id }};
+
+            let ratingChange = 0;
+            if (!winnerId) {
+                ratingChange = 0;
+            } else if (winnerId == userId) {
+                ratingChange = -10;
+            } else {
+                ratingChange = +10;
+            }
+
+            const previousRating = currentRating;
+            currentRating += ratingChange;
+
+            if (ratingChange == 0){
+                cell.textContent = `${previousRating} (+0)`;
+            } else if (ratingChange > 0){ 
+                cell.textContent = `${previousRating} (-10)`;
+            }
+            else {
+                cell.textContent = `${previousRating} (+10)`;
+            }
+        });
+    });
+    </script>
 </div>

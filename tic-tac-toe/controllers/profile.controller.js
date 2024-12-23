@@ -3,6 +3,7 @@ const axios = require("axios");
 const https = require("https");
 const path = require("path");
 const fs = require("fs");
+const Game = require("../models/game");
 const {
     STATIC_AVATARS,
     GAME_PIECES,
@@ -14,6 +15,8 @@ class ProfileController {
         try {
             const user = await UserModel.findById(req.user.id);
 
+            const gameHistory = await Game.getGameHistory(req.user.id);
+
             const useAuthAvatar = req.user.scope?.includes("profile:full");
 
             res.render("profile", {
@@ -22,6 +25,7 @@ class ProfileController {
                 gamePieces: GAME_PIECES,
                 boardColors: BOARD_COLORS,
                 useAuthAvatar,
+                gameHistory: gameHistory,
             });
         } catch (error) {
             console.error("Profile page error:", error);

@@ -103,6 +103,18 @@ app.engine(
                 const sum = Number(row) + Number(col);
                 return sum % 2 === 0 ? hostColor : guestColor;
             },
+
+            formatDate: function (date) {
+                return date.toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
+                    second: "numeric",
+                    hour12: true,
+                });
+            },
         },
     })
 );

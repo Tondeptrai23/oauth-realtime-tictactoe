@@ -81,7 +81,6 @@ class GameModel {
     }
 
     static async approveJoinRequest(gameId, hostId, userId) {
-        // Verify host ownership
         const game = await db.one(
             `SELECT * FROM ${db.tables.games} WHERE id = $1 AND host_id = $2`,
             [gameId, hostId]
@@ -91,13 +90,11 @@ class GameModel {
             throw new Error("Unauthorized action");
         }
 
-        // Update game with new guest
         await db.none(
             `UPDATE ${db.tables.games} SET guest_id = $1, status = 'ready' WHERE id = $2`,
             [userId, gameId]
         );
 
-        // Get updated game info
         return await db.one(
             `SELECT g.*, 
                 guest.username as guest_username,
@@ -152,7 +149,6 @@ class GameModel {
             ["completed", winnerId, gameId]
         );
 
-        // Update ratings
         const winner = winnerId === game.host_id ? "host" : "guest";
         const loser = winner === "host" ? "guest" : "host";
         const winnerRating = game[`${winner}_rating`];
@@ -180,7 +176,7 @@ class GameModel {
     static async updateGameAfterDraw(gameId) {
         await db.none(
             `UPDATE ${db.tables.games}
-            SET status = 'draw', winner_id = NULL
+            SET status = 'completed', winner_id = NULL
             WHERE id = $1`,
             [gameId]
         );
@@ -262,6 +258,23 @@ class GameModel {
              JOIN ${db.tables.users} host ON g.host_id = host.id
              WHERE g.status IN ('waiting', 'in_progress', 'ready')
              ORDER BY g.created_at DESC`
+        );
+    }
+
+    static async getGameHistory(userId) {
+        return await db.manyOrNone(
+            `SELECT g.*, 
+                    host.username as host_username,
+                    guest.username as guest_username,
+                    winner.username as winner_username
+             FROM ${db.tables.games} g
+             JOIN ${db.tables.users} host ON g.host_id = host.id
+             LEFT JOIN ${db.tables.users} guest ON g.guest_id = guest.id
+             LEFT JOIN ${db.tables.users} winner ON g.winner_id = winner.id
+             WHERE (g.host_id = $1 OR g.guest_id = $1)
+             AND g.status = 'completed'
+             ORDER BY g.created_at DESC`,
+            [userId]
         );
     }
 }

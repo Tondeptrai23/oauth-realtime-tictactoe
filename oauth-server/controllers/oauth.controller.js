@@ -343,7 +343,7 @@ class OAuthController {
                     scope: scope,
                 },
                 process.env.OAUTH_JWT_SECRET,
-                { expiresIn: "1h" }
+                { expiresIn: "1d" }
             );
 
             await OAuthModel.deleteAuthorizationCode(code);
@@ -351,7 +351,7 @@ class OAuthController {
             res.json({
                 access_token: accessToken,
                 token_type: "Bearer",
-                expires_in: 3600,
+                expires_in: 86400,
                 scope: Array.isArray(scope) ? scope.join(" ") : scope,
             });
         } catch (error) {
