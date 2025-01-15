@@ -10,7 +10,9 @@ const helpers = {
     times: function (n, block) {
         let accum = "";
         for (let i = 0; i < n; i++) {
-            accum += block.fn(i);
+            block.data = block.data || {};
+            block.data.index = i;
+            accum += block.fn({ index: i });
         }
         return accum;
     },
@@ -55,6 +57,10 @@ const helpers = {
             second: "numeric",
             hour12: true,
         });
+    },
+
+    add: function (a, b) {
+        return a + b;
     },
 };
 

@@ -41,8 +41,8 @@
                             {{#times game.game.board_size}}
                                 {{#times ../game.game.board_size}}
                                     <div class="replay-board-cell" 
-                                         data-row="{{subtract @../index 1}}" 
-                                         data-col="{{subtract @index 1}}"
+                                        data-row="{{lookup ../this "index"}}" 
+                                        data-col="{{lookup this "index"}}"
                                     ></div>
                                 {{/times}}
                             {{/times}}

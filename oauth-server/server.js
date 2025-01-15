@@ -47,7 +47,7 @@ app.use(
         store: new PgSession({
             pgPromise: db,
             tableName: "user_sessions",
-            schemaName: "s22375",
+            schemaName: process.env.DB_SCHEMA,
         }),
         secret: process.env.OAUTH_SESSION_SECRET,
         resave: false,

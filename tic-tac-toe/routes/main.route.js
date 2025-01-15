@@ -27,6 +27,8 @@ router.post(
     ProfileController.updateProfile.bind(ProfileController)
 );
 
+router.get("/leaderboard", GameController.showLeaderboard.bind(GameController));
+
 router.get("/lobby/create", GameController.showCreateForm.bind(GameController));
 
 router.post("/lobby/create", GameController.createGame.bind(GameController));

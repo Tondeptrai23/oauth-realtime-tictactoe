@@ -3,15 +3,17 @@ $(document).ready(function () {
     let isPlaying = false;
     let replayInterval = null;
     let replaySpeed = parseInt($("#speedSelect").val());
+    let board = [];
 
     const $boardContainer = $(".game-board-container");
     const boardSize = parseInt($boardContainer.data("boardSize"));
     const hostId = $boardContainer.data("hostId");
     const guestId = $boardContainer.data("guestId");
 
-    let board = Array(boardSize)
-        .fill(null)
-        .map(() => Array(boardSize).fill(null));
+    // Initialize empty board
+    for (let i = 0; i < boardSize; i++) {
+        board[i] = Array(boardSize).fill(null);
+    }
 
     let moves = [];
     try {
@@ -97,6 +99,15 @@ $(document).ready(function () {
     function stepForward() {
         if (currentMoveIndex >= moves.length - 1) return;
 
+        // Remove highlighting from previous move if exists
+        if (currentMoveIndex >= 0) {
+            const prevMove = moves[currentMoveIndex];
+            const $prevCell = $(
+                `.replay-board-cell[data-row="${prevMove.position_x}"][data-col="${prevMove.position_y}"]`
+            );
+            $prevCell.removeClass("current-move-highlight");
+        }
+
         currentMoveIndex++;
         const move = moves[currentMoveIndex];
 
@@ -117,8 +128,15 @@ $(document).ready(function () {
             y >= 0 &&
             y < boardSize
         ) {
+            // Update board state
             board[x][y] = piece;
-            updateBoardDisplay();
+
+            // Update display and add highlight to current move
+            const $cell = $(
+                `.replay-board-cell[data-row="${x}"][data-col="${y}"]`
+            );
+            $cell.html(getPieceSVG(piece)).addClass("current-move-highlight");
+
             updateMoveHighlight();
             updateControlButtons();
         } else {
@@ -129,50 +147,73 @@ $(document).ready(function () {
     function stepBack() {
         if (currentMoveIndex < 0) return;
 
-        const move = moves[currentMoveIndex];
-        if (move) {
-            const x = parseInt(move.position_x);
-            const y = parseInt(move.position_y);
-            if (
-                !isNaN(x) &&
-                !isNaN(y) &&
-                x >= 0 &&
-                x < boardSize &&
-                y >= 0 &&
-                y < boardSize
-            ) {
-                board[x][y] = null;
-            }
+        // Remove current move's piece and highlight
+        const currentMove = moves[currentMoveIndex];
+        if (currentMove) {
+            const $currentCell = $(
+                `.replay-board-cell[data-row="${currentMove.position_x}"][data-col="${currentMove.position_y}"]`
+            );
+            $currentCell.empty().removeClass("current-move-highlight");
+            // Also clear it from the board array
+            board[currentMove.position_x][currentMove.position_y] = null;
         }
 
         currentMoveIndex--;
-        updateBoardDisplay();
+
+        // Add highlight to previous move if there is one
+        if (currentMoveIndex >= 0) {
+            const prevMove = moves[currentMoveIndex];
+            const $prevCell = $(
+                `.replay-board-cell[data-row="${prevMove.position_x}"][data-col="${prevMove.position_y}"]`
+            );
+            $prevCell.addClass("current-move-highlight");
+        }
+
         updateMoveHighlight();
         updateControlButtons();
+    }
+
+    function reconstructBoardToMove(moveIndex) {
+        // Clear the board array and display
+        for (let i = 0; i < boardSize; i++) {
+            for (let j = 0; j < boardSize; j++) {
+                board[i][j] = null;
+                $(
+                    `.replay-board-cell[data-row="${i}"][data-col="${j}"]`
+                ).empty();
+            }
+        }
+
+        // Replay moves up to the current index
+        for (let i = 0; i <= moveIndex; i++) {
+            const move = moves[i];
+            const x = parseInt(move.position_x);
+            const y = parseInt(move.position_y);
+            const piece =
+                parseInt(move.user_id) === parseInt(hostId) ? "X" : "O";
+
+            board[x][y] = piece;
+            const $cell = $(
+                `.replay-board-cell[data-row="${x}"][data-col="${y}"]`
+            );
+            $cell.html(getPieceSVG(piece));
+        }
     }
 
     function reset() {
         stopReplay();
         currentMoveIndex = -1;
-        board = Array(boardSize)
-            .fill(null)
-            .map(() => Array(boardSize).fill(null));
-        updateBoardDisplay();
+        // Clear the board array and display
+        for (let i = 0; i < boardSize; i++) {
+            for (let j = 0; j < boardSize; j++) {
+                board[i][j] = null;
+                $(`.replay-board-cell[data-row="${i}"][data-col="${j}"]`)
+                    .empty()
+                    .removeClass("current-move-highlight");
+            }
+        }
         updateMoveHighlight();
         updateControlButtons();
-    }
-
-    function updateBoardDisplay() {
-        $(".replay-board-cell").each(function () {
-            const $cell = $(this);
-            const row = parseInt($cell.data("row"));
-            const col = parseInt($cell.data("col"));
-            if (!isNaN(row) && !isNaN(col) && board[row] && board[row][col]) {
-                $cell.html(getPieceSVG(board[row][col]));
-            } else {
-                $cell.empty();
-            }
-        });
     }
 
     function updateMoveHighlight() {

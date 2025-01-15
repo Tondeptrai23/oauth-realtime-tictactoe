@@ -66,6 +66,7 @@ class OAuthController {
     async getClientsByUser(req, res) {
         try {
             const clients = await OAuthModel.getClientsByUserId(req.user.id);
+            console.log(clients);
             res.json({ clients });
         } catch (error) {
             console.error("Error fetching OAuth clients:", error);

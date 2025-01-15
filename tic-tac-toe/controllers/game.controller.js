@@ -163,6 +163,23 @@ class GameController {
             });
         }
     }
+
+    static async showLeaderboard(req, res) {
+        try {
+            const leaderboard = await Game.getLeaderboard();
+
+            res.render("leaderboard", {
+                user: req.user,
+                players: leaderboard,
+                layout: "main",
+            });
+        } catch (error) {
+            console.error("Error loading leaderboard:", error);
+            res.status(500).render("error", {
+                message: "Error loading leaderboard",
+            });
+        }
+    }
 }
 
 module.exports = GameController;

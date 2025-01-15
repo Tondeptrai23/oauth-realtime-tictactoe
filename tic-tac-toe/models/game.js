@@ -305,6 +305,15 @@ class GameModel {
 
         return { game, moves };
     }
+
+    static async getLeaderboard() {
+        return await db.manyOrNone(
+            `SELECT username, rating, avatar_url
+             FROM ${db.tables.users}
+             ORDER BY rating DESC
+             LIMIT 10`
+        );
+    }
 }
 
 module.exports = GameModel;

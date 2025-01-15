@@ -1,0 +1,55 @@
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="mb-0">Player Rankings</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 80px">Rank</th>
+                            <th>Player</th>
+                            <th class="text-center" style="width: 120px">Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each players}}
+                        <tr class="align-middle">
+                            <td class="text-center">
+                                {{#if (eq @index 0)}}
+                                    <i class="bi bi-trophy-fill text-warning fs-4"></i>
+                                {{else if (eq @index 1)}}
+                                    <i class="bi bi-trophy-fill text-secondary fs-4"></i>
+                                {{else if (eq @index 2)}}
+                                    <i class="bi bi-trophy-fill text-bronze fs-4"></i>
+                                {{else}}
+                                    #{{add @index 1}}
+                                {{/if}}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{#if (eq avatar_url 'auth')}}/api/profile/avatar/{{id}}{{else}}{{avatar_url}}{{/if}}" 
+                                         alt="Avatar" 
+                                         class="rounded-circle me-2" 
+                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                    <div class="fw-bold">{{username}}</div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-primary rounded-pill px-3">{{rating}}</span>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.text-bronze {
+    color: #cd7f32;
+}
+</style>
