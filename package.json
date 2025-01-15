@@ -4,6 +4,8 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
+        "oauth": "nodemon ./oauth-server/server.js",
+        "tic-tac-toe": "nodemon ./tic-tac-toe/app.js",
         "start": "concurrently \"nodemon ./oauth-server/server.js\"  \"nodemon ./tic-tac-toe/app.js\""
     },
     "keywords": [],
